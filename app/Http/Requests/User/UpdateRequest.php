@@ -35,6 +35,7 @@ class UpdateRequest extends FormRequest
             'credit_2' => 'nullable',
             'credit_3' => 'nullable',
             'credit_4' => 'nullable',
+            'credit_15' => 'nullable',
             'sms' => 'nullable',
             'referral' => 'nullable',
         ];

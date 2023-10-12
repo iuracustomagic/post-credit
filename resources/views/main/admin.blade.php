@@ -72,6 +72,17 @@
                         <!-- small box -->
                         <div class="small-box bg-success">
                             <div class="inner">
+                                <p>Подписано</p>
+                                <h3>{{count($signed)}}</h3>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- ./col -->
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-warning">
+                            <div class="inner">
                                 <p>Одобрено</p>
                                 <h3>{{count($approved)}}</h3>
                             </div>
@@ -81,7 +92,7 @@
                     <!-- ./col -->
                     <div class="col-lg-3 col-6">
                         <!-- small box -->
-                        <div class="small-box bg-warning">
+                        <div class="small-box bg-danger">
                             <div class="inner">
                                 <p>Отказано</p>
                                 <h3>{{count($rejected)}}</h3>
@@ -101,6 +112,7 @@
                             <tr>
                                 <th>Статус</th>
                                 <th>ФИО</th>
+                                <th>Менеджер</th>
                                 <th>Дата</th>
                                 <th>Название</th>
                                 <th>Дата рождения</th>
@@ -121,6 +133,10 @@
                                     </td>
                                     <td>
                                         {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
+                                    </td>
+                                    <td>
+                                        <p class="mb-1">{{$order->managerName}}/</p>
+                                        <p class="mb-1">{{$order->managerPhone}}</p>
                                     </td>
                                     <td> {{$order->created_at}}</td>
                                     <td> {{$order->companyName}}/{{$order->divisionAddress}}</td>
@@ -154,7 +170,28 @@
                         </ul>
 
                     </div>
+                    <div class="pull-right">
 
+                        <ul class="ul-dropdown">
+                            <li class="secondli">
+                                <i class="la la-eye-slash mr-2"></i><a href="#">Видимость колонок</a>
+                                <ul class="ul-choose">
+                                    <li data-id="0">Статус</li>
+                                    <li data-id="1">ФИО</li>
+                                    <li data-id="2">Менеджер</li>
+                                    <li data-id="3">Дата</li>
+                                    <li data-id="4">Название</li>
+                                    <li data-id="5">Дата рождения</li>
+                                    <li data-id="6">Телефон</li>
+                                    <li data-id="7">Срок кредита</li>
+                                    <li data-id="8">Сумма кредита</li>
+                                    <li data-id="9">Стоимость смс</li>
+                                    <li data-id="10">Товары</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    </div>
                 </div>
             </div><!-- /.container-fluid -->
 
@@ -186,8 +223,23 @@
                         table.button('.buttons-print').trigger();
                     }
                 });
+                $(".ul-choose li").click(function() {
+                    $( this ).toggleClass( "not-export-col" );
+                    const text =  $( this ).text();
+                    const id =  $( this ).data( "id" );
+                    $('#orderTable thead tr:first').each(function() {
 
-                const table = $('#orderTable').DataTable({
+                        $(this).find("th").eq(id).toggleClass( "not-export-col" );
+
+                    });
+                    $('#orderTable tbody tr').each(function() {
+
+                        $(this).find("td").eq(id).toggleClass( "not-export-col" );
+
+                    });
+
+                });
+               $('#orderTable').DataTable({
                     "language": {
                         "lengthMenu": "_MENU_  записей на странице",
                         "info": "Показано _START_ до _END_ из _TOTAL_ совпадений",
@@ -199,7 +251,7 @@
                             "previous": "<"
                         }
                     },
-                    dropup: true,
+                    // dropup: true,
                     buttons: [
                         {
                             text: 'csv',
@@ -234,12 +286,12 @@
                             }
                         },
                     ],
-                    columnDefs: [{
-                        orderable: false,
-                        targets: -1
-                    }]
+                    // columnDefs: [{
+                    //     orderable: false,
+                    //     targets: -1
+                    // }]
                 });
-                // table.buttons( '.export' ).remove();
+
 
             </script>
 
@@ -256,6 +308,9 @@
                     vertical-align: middle !important;
                 }
                 .table td table {
+                    width: 100%;
+                }
+                .table thead {
                     width: 100%;
                 }
 
@@ -344,18 +399,19 @@
 
 
                 /*-------------------------------*/
-
-                .pull-left ul {
+                .pull-left ul,
+                .pull-right ul {
                     list-style: none;
                     margin: 0;
                     padding-left: 0;
                 }
-                .pull-left a {
+                .pull-left a,
+                .pull-right a{
                     text-decoration: none;
                     color: #ffffff;
                 }
-                .pull-left li
-                {
+                .pull-left li,
+                .pull-right li{
                     color: #ffffff;
                     background-color: #456e9a;
                     border-color: #456e9a;
@@ -369,13 +425,13 @@
                     font-weight: 400;
                     line-height: 1.428571;
                 }
-                .pull-left li:hover
-                {
+                .pull-left li:hover,
+                .pull-right li:hover {
                     cursor: pointer;
                     color: #00bb00;
                 }
-                .pull-left li a:hover
-                {
+                .pull-left li a:hover,
+                .pull-right li a:hover {
                     color: #00bb00;
                 }
                 .pull-left ul li ul {
@@ -390,15 +446,27 @@
                     bottom: 34px;
                     display: none;
                 }
-
+                .pull-right ul li ul {
+                    visibility: hidden;
+                    opacity: 0;
+                    min-width: 10.2rem;
+                    position: absolute;
+                    z-index: 1000;
+                    transition: all 0.5s ease;
+                    margin-top: 8px;
+                    left: 0;
+                    bottom: 34px;
+                    display: none;
+                }
                 .pull-left ul li:hover>ul,
-                .pull-left ul li ul:hover  {
+                .pull-left ul li ul:hover,
+                .pull-right ul li:hover>ul {
                     visibility: visible;
                     opacity: 1;
                     display: block;
                 }
-                .pull-left ul li ul li
-                {
+                .pull-left ul li ul li,
+                .pull-right ul li ul li  {
                     clear: both;
                     width: 100%;
                     color: #ffffff;
@@ -426,6 +494,12 @@
                     font-size: 0.8rem;
                     vertical-align: middle;
                     margin-right: 5px;
+                }
+                .table tr th.not-export-col {
+                    display: none;
+                }
+                .table tr td.not-export-col {
+                    display: none;
                 }
                 .dt-buttons {
                     display: none;

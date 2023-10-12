@@ -20,7 +20,7 @@ class StatisticController extends Controller
                return redirect()->route('order.index');
         }
 
-$divisions = Division::all();
+
         $orders = Order::when($request->status != null, function ($q) use ($request) {
             return $q->where('status', $request->status);
         })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
@@ -36,6 +36,7 @@ $divisions = Division::all();
             $companies = Company::all();
             $approved = Order::where('status', 'approved')->get();
             $rejected= Order::where('status', 'rejected')->get();
+            $signed= Order::where('status', 'signed')->get();
 
             $checkOrders = Order::where('status', 'new')->orderBy('created_at', 'ASC')->get();
 //            dd($checkOrders);
@@ -65,17 +66,19 @@ $divisions = Division::all();
 //    sleep(1);
 //}
 
-            return view('main.admin', compact('orders', 'companies', 'approved', 'rejected'));
+            return view('main.admin', compact('orders', 'companies', 'approved', 'rejected', 'signed'));
         } else if(Auth::user()->role_id == 2) {
             $company = Company::where('created_by', Auth::id())->first();
             $companies = Company::where('created_by', Auth::id())->get();
             if($company) {
                 $approved = Order::where('company_id', $company->id)->where('status', 'approved')->get();
                 $rejected= Order::where('company_id', $company->id)->where('status', 'rejected')->get();
+                $signed= Order::where('company_id', $company->id)->where('status', 'signed')->get();
                 $companyId = $company->id;
             } else {
                 $approved = [];
                 $rejected= [];
+                $signed= [];
                 $companyId = 0;
             }
 
@@ -109,7 +112,7 @@ $divisions = Division::all();
 //                }
 //            }
 
-            return view('main.manager', compact('orders', 'approved','companies', 'rejected'));
+            return view('main.manager', compact('orders', 'approved','companies', 'rejected', 'signed'));
         } else if(Auth::user()->role_id == 3) {
 
             $company = Company::where('leader_id', Auth::id())->first();
@@ -126,6 +129,7 @@ $divisions = Division::all();
             })->where('company_id', $company->id)->orderBy('created_at', 'DESC')->get();
             $approved = Order::where('company_id', $company->id)->where('status', 'approved')->get();
             $rejected = Order::where('company_id', $company->id)->where('status', 'rejected')->get();
+            $signed= Order::where('company_id', $company->id)->where('status', 'signed')->get();
 
             $checkOrders = Order::where('status', 'new')->where('company_id', $company->id)->get();
             count($checkOrders) <= 25 ? $length=count($checkOrders): $length=25;
@@ -149,7 +153,7 @@ $divisions = Division::all();
             }
 
 //    dd($orders);
-    return view('main.index', compact('orders', 'divisions', 'approved', 'rejected'));
+    return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
 }
 
 else redirect()->route('login');

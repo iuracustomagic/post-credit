@@ -40,6 +40,7 @@
                                 <a class="nav-item nav-link active fs-5" id="product-desc-tab" data-toggle="tab" href="#product-desc" role="tab" aria-controls="product-desc" aria-selected="true">Настройки</a>
                                 <a class="nav-item nav-link fs-5" id="product-comments-tab" data-toggle="tab" href="#product-comments" role="tab" aria-controls="product-comments" aria-selected="false">Рефералы</a>
                                 <a class="nav-item nav-link fs-5" id="product-rating-tab" data-toggle="tab" href="#product-rating" role="tab" aria-controls="product-rating" aria-selected="false">Бонусы</a>
+                                <a class="nav-item nav-link fs-5" id="company-tab" data-toggle="tab" href="#company-rating" role="tab" aria-controls="company-rating" aria-selected="false">Организации</a>
                             </div>
                         </nav>
                         <div class="tab-content p-3" id="nav-tabContent" style="height: 500px">
@@ -251,6 +252,63 @@
                                 </div>
 
                             </div>
+                            <div class="tab-pane fade" id="company-rating" role="tabpanel" aria-labelledby="company-rating-tab">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <table class="table table-hover text-nowrap" id="companyTable" style="min-height: 100px">
+                                            <thead>
+                                            <tr>
+                                                <th>Статус</th>
+                                                <th>Название</th>
+                                                <th>Торговые точки</th>
+                                                <th>Продавцы</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($companies as $company)
+                                                <tr >
+                                                    <td>
+                                                        <span class="">{{$company->statusTitle}}</span>
+                                                    </td>
+                                                    <td> {{$company->name}}</td>
+                                                    <td>
+
+                                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                                            <div class="btn-group" role="group">
+                                                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                                    {{count($company->divisions)}}
+                                                                </button>
+                                                                <ul class="dropdown-menu">
+                                                                    <li><a class="dropdown-item" href="{{route('companyDivisions.show', $company->id)}}">Показать все</a></li>
+                                                                    <li><a class="dropdown-item" href="{{route('companyDivisions.add', $company->id)}}">Добавить ТТ</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+
+                                                    </td>
+                                                    <td>
+                                                        <div class="" >
+                                                            <div class="btn-group" role="group">
+                                                                <a class="btn btn-outline-secondary" href="{{route('showSalesmen', $company->id)}}">{{count($company->salesmen)}}</a>
+
+                                                            </div>
+                                                        </div>
+
+
+                                                    </td>
+
+
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+
+                                    </div>
+                                </div>
+
+
+
+                            </div>
                         </div>
                         <div class="form-group text-center">
                             <input type="submit" name="save" class="btn btn-primary" value="Сохранить">
@@ -308,6 +366,21 @@
                     },
 
                 });
+                const table2 = $('#companyTable').DataTable({
+                    "language": {
+                        "lengthMenu": "_MENU_  записей на странице",
+                        "info": "Показано _START_ до _END_ из _TOTAL_ совпадений",
+                        "search": "Поиск:",
+                        "paginate": {
+                            "first": "First",
+                            "last": "Last",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    },
+
+                });
                 table.buttons( '.export' ).remove();
+                table2.buttons( '.export' ).remove();
             </script>
     @endpush

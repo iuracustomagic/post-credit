@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreRequest;
 use App\Http\Requests\User\UpdateRequest;
+use App\Models\Company;
 use App\Models\ManagerBonusSetting;
 use App\Models\Rate;
 use App\Models\Role;
@@ -43,9 +44,10 @@ class ManagerController extends Controller
         $credit2 = $data['credit_2'];
         $credit3 = $data['credit_3'];
         $credit4 = $data['credit_4'];
+        $credit5 = $data['credit_15'];
         $sms = $data['sms'];
         $referral = $data['referral'];
-        unset($data['credit_1'], $data['credit_2'], $data['credit_3'], $data['credit_4'], $data['sms'],$data['referral']);
+        unset($data['credit_1'], $data['credit_2'], $data['credit_3'], $data['credit_4'], $data['credit_15'], $data['sms'],$data['referral']);
        $user = User::firstOrCreate(['email' => $data['email']], $data);
        $managerBonus = [
            'manager_id'=>$user->id,
@@ -53,6 +55,7 @@ class ManagerController extends Controller
            'credit_2'=>$credit2,
            'credit_3'=>$credit3,
            'credit_4'=>$credit4,
+           'credit_5'=>$credit5,
            'sms'=>$sms,
            'referral'=>$referral,
        ];
@@ -68,6 +71,7 @@ class ManagerController extends Controller
         $manager = User::where('id', $user->manager_id)->first();
         $managerBonus = ManagerBonusSetting::where('manager_id', $user->id)->first();
         $creditRates = Rate::where('type', 'credit')->get();
+        $companies=Company::where('created_by', $user->id )->get();
 
         if(isset($managerBonus)) {
             foreach ($creditRates as $key=> $creditRate) {
@@ -82,6 +86,8 @@ class ManagerController extends Controller
                 }
                 if($creditRate['id'] ==4){
                     $creditRate['reward']=$managerBonus->credit_4;
+                }   if($creditRate['id'] ==15){
+                    $creditRate['reward']=$managerBonus->credit_5;
                 }
             }
 
@@ -98,7 +104,7 @@ class ManagerController extends Controller
             $manager_id = $manager->id;
         } else  $manager_id = 0;
 //     dd($manager);
-        return view('user.manager.edit', compact('user', 'managers','myManagers', 'manager_id', 'creditRates', 'smsRate', 'referralRate'));
+        return view('user.manager.edit', compact('user', 'managers','myManagers', 'companies','manager_id', 'creditRates', 'smsRate', 'referralRate'));
     }
 
     public function update(UpdateRequest $request, User $user)
@@ -110,11 +116,12 @@ class ManagerController extends Controller
                 'credit_2'=>$data['credit_2'],
                 'credit_3'=>$data['credit_3'],
                 'credit_4'=>$data['credit_4'],
+                'credit_5'=>$data['credit_15'],
                 'sms'=>$data['sms'],
                 'referral'=>$data['referral'],
             ];
 
-            unset($data['credit_1'], $data['credit_2'], $data['credit_3'], $data['credit_4'], $data['sms'],$data['referral']);
+            unset($data['credit_1'], $data['credit_2'], $data['credit_3'], $data['credit_4'], $data['credit_15'],$data['sms'],$data['referral']);
             if(!isset($data['password'])) {
                 unset($data['password']);
             }

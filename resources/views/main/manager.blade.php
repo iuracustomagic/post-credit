@@ -68,6 +68,17 @@
                         <!-- small box -->
                         <div class="small-box bg-success">
                             <div class="inner">
+                                <p>Подписано</p>
+                                <h3>{{count($signed)}}</h3>
+                            </div>
+
+                        </div>
+                    </div>
+                    <!-- ./col -->
+                    <div class="col-lg-3 col-6">
+                        <!-- small box -->
+                        <div class="small-box bg-warning">
+                            <div class="inner">
                                 <p>Одобрено</p>
                                 <h3>{{count($approved)}}</h3>
                             </div>
@@ -77,7 +88,7 @@
                     <!-- ./col -->
                     <div class="col-lg-3 col-6">
                         <!-- small box -->
-                        <div class="small-box bg-warning">
+                        <div class="small-box bg-danger">
                             <div class="inner">
                                 <p>Отказано</p>
                                 <h3>{{count($rejected)}}</h3>

@@ -34,8 +34,17 @@ class Company extends Model
     {
         return $this->hasMany('App\Models\Division', 'company_id','id');
     }
+
     public function salesmen()
     {
         return $this->hasMany('App\Models\UserCompany', 'company_id','id');
+    }
+    public function getManagerNameAttribute()
+    {
+        $manager = User::where('id', $this->created_by )->first();
+        if($manager) {
+            return $manager['first_name'].' '.$manager['last_name'];
+        } else return '-';
+
     }
 }

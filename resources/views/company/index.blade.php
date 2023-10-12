@@ -38,6 +38,7 @@
                             <tr>
                                 <th>Статус</th>
                                 <th>Название</th>
+                                <th>Менеджер</th>
                                 <th>Торговые точки</th>
                                 <th>Продавцы</th>
                                 <th>Действия</th>
@@ -50,8 +51,8 @@
                                         <button class="btn btn-sm {{$company->status == '0' ? 'btn-danger' : 'btn-success'}}">{{$company->statusTitle}}</button>
                                     </td>
                                     <td> {{$company->name}}</td>
+                                    <td> {{$company->managerName}}</td>
                                     <td>
-
                                         <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
                                             <div class="btn-group" role="group">
                                                 <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
@@ -137,16 +138,16 @@
     @push('script')
 
 
-        <!-- DataTable -->
-            <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js" type="text/javascript"></script>
-            <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js" type="text/javascript"></script>
-            <script src="https://cdn.datatables.net/buttons/1.6.5/js/dataTables.buttons.min.js" type="text/javascript"></script>
-            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.flash.min.js" type="text/javascript"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js" type="text/javascript"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js" type="text/javascript"></script>
-            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js" type="text/javascript"></script>
-            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.html5.min.js" type="text/javascript"></script>
-            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.print.min.js" type="text/javascript"></script>
+{{--        <!-- DataTable -->--}}
+{{--            <script src="https://cdn.datatables.net/1.10.22/js/jquery.dataTables.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdn.datatables.net/1.10.22/js/dataTables.bootstrap4.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdn.datatables.net/buttons/1.6.5/js/dataTables.buttons.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.flash.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.html5.min.js" type="text/javascript"></script>--}}
+{{--            <script src="https://cdn.datatables.net/buttons/1.6.5/js/buttons.print.min.js" type="text/javascript"></script>--}}
 
             <script>
               const table = $('#crudTable').DataTable({
@@ -161,8 +162,18 @@
                           "previous": "<"
                       }
                   },
+
+                  aoColumns : [
+                      { "sWidth": "10%"},
+                      { "sWidth": "25%"},
+                      { "sWidth": "20%"},
+                      { "sWidth": "15%"},
+                      { "sWidth": "15%"},
+                      { "sWidth": "15%"},
+                  ],
                   "columnDefs": [
-                      { "orderable": false, "targets": [4] }
+                      { "orderable": false, "targets": [5] },
+                      // { "width": "10%", "targets": 1 }
                   ]
               });
               table.buttons( '.export' ).remove();

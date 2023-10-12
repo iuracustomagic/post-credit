@@ -80,4 +80,28 @@ class Order extends Model
 
         return $nameStr;
     }
+    public function getManagerNameAttribute()
+    {
+        $company=Company::where('id', $this->company_id)->first();
+        if($company) {
+            $manager = User::where('id', $company->created_by )->first();
+            if($manager) {
+                return $manager['first_name'].' '.$manager['last_name'].' '.$manager['surname'];
+            } else return '-';
+        }else return '-';
+
+
+    }
+    public function getManagerPhoneAttribute()
+    {
+        $company=Company::where('id', $this->company_id)->first();
+        if($company) {
+            $manager = User::where('id', $company->created_by )->first();
+            if($manager) {
+                return $manager['phone'];
+            } else return '-';
+        }else return '-';
+
+
+    }
 }
