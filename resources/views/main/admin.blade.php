@@ -120,6 +120,7 @@
                                 <th>Срок кредита</th>
                                 <th>Сумма кредита</th>
                                 <th>Стоимость смс</th>
+                                <th>Первоначальный взнос</th>
                                 <th>Товары</th>
 
 
@@ -145,6 +146,7 @@
                                     <td> {{$order->term_credit}}</td>
                                     <td> {{$order->sum_credit}}</td>
                                     <td> {{$order->smsValue}}</td>
+                                    <td> {{$order->initial_fee}}</td>
                                     <td> {{$order->productName}}</td>
 
                                 </tr>
@@ -186,7 +188,8 @@
                                     <li data-id="7">Срок кредита</li>
                                     <li data-id="8">Сумма кредита</li>
                                     <li data-id="9">Стоимость смс</li>
-                                    <li data-id="10">Товары</li>
+                                    <li data-id="10">Первоначальный взнос</li>
+                                    <li data-id="11">Товары</li>
                                 </ul>
                             </li>
                         </ul>

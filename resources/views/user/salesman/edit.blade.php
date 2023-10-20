@@ -75,11 +75,11 @@
                         <div class="row " style="margin-bottom: 150px">
                             <div class="form-group col-sm-4" data-select2-id="{{$company_id}}">
                                 <label>Выберите ООО</label>
-                                <select name="company_id" id="companySelect" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="{{$company_id}}" tabindex="-1" aria-hidden="true">
+                                <select name="company_id" id="companySelect" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select1-id="{{$company_id}}" tabindex="-1" aria-hidden="true">
 
                                     @foreach($companies as $company)
 
-                                        <option {{$company->id == $company_id ? 'selected' : ''}} data-select2-id="{{$company->id}}" value="{{$company->id}}">{{$company->name}}</option>
+                                        <option {{$company->id == $company_id ? 'selected' : ''}} data-select1-id="{{$company->id}}" value="{{$company->id}}">{{$company->name}}</option>
                                     @endforeach
 
                                 </select>
@@ -91,7 +91,7 @@
                                 <select name="division_id" id="divisionSelect" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="{{$division_id}}" tabindex="-1" aria-hidden="true">
 {{--                                    <option selected value="{{$divisionOld->id}}">{{$divisionOld->name}}</option>--}}
                                     @foreach($divisionOld as $division)
-                                        <option  data-select2-id="{{$division_id}}" value="{{$division->id}}">{{$division->name}}</option>
+                                        <option {{$division->id == $division_id ? 'selected' : ''}}  data-select2-id="{{$division_id}}" value="{{$division->id}}">{{$division->name}}</option>
                                     @endforeach
 
                                 </select>

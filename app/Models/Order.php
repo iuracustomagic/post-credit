@@ -39,6 +39,18 @@ class Order extends Model
             return $company['name'];
         } else return '-';
     }
+
+    public function getDivisionNameAttribute()
+    {
+
+        $division = Division::where('id', $this->division_id )->first();
+        if($division) {
+            return $division['name'];
+        } else return '-';
+
+
+
+    }
     public function getDivisionAddressAttribute()
     {
 

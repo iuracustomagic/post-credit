@@ -16,10 +16,6 @@ class StatisticController extends Controller
     public function main(Request $request)
     {
 
-        if(Auth::user()->role_id == 4) {
-               return redirect()->route('order.index');
-        }
-
 
         $orders = Order::when($request->status != null, function ($q) use ($request) {
             return $q->where('status', $request->status);
@@ -153,10 +149,27 @@ class StatisticController extends Controller
             }
 
 //    dd($orders);
-    return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
-}
+            return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
+        } else  if(Auth::user()->role_id == 4) {
 
-else redirect()->route('login');
+            $orders = Order::when($request->status != null, function ($q) use ($request) {
+                return $q->where('status', $request->status);
+            })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
+                return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
+            })->when($request->company != null, function ($q) use ($request) {
+
+                return $q->where('company_id',$request->company);
+            })->where('salesman_id',  Auth::id())->orderBy('created_at', 'DESC')->get();
+            $company = UserCompany::where('user_id', Auth::id())->first();
+            $divisions = Division::where('company_id', $company->id)->get();
+            $approved = Order::where('salesman_id',  Auth::id())->where('status', 'approved')->get();
+            $rejected = Order::where('salesman_id',  Auth::id())->where('status', 'rejected')->get();
+            $signed= Order::where('salesman_id',  Auth::id())->where('status', 'signed')->get();
+            return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
+        }
+
+
+        else redirect()->route('login');
 
     }
 }

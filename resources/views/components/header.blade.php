@@ -1,11 +1,26 @@
+@php
+    use Illuminate\Support\Facades\Auth;
+    $user = Auth::user();
+@endphp
+
 <!-- Navbar -->
 <nav class="main-header navbar navbar-expand navbar-white navbar-light">
     <!-- Left navbar links -->
-    <ul class="navbar-nav">
+    <ul class="navbar-nav align-items-center">
         <li class="nav-item">
             <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
         </li>
-
+        @if($user->role_id == 3)
+        <li>
+            <span><b>Ваш персональный менеджер: </b></span>
+            <span>{{$user->leaderManager}}</span>
+        </li>
+        @elseif($user->role_id == 4)
+            <li>
+                <span><b>Ваш персональный менеджер: </b></span>
+                <span>{{$user->salesmanManager}}</span>
+            </li>
+        @endif
     </ul>
 
     <!-- Right navbar links -->

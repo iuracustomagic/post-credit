@@ -30,7 +30,7 @@ class AuthController extends Controller
                 $userCompany = UserCompany::where('user_id', Auth::id())->first();
                 $company = Company::findOrFail($userCompany->company_id);
                 if($company->status == 2) {
-                    return redirect()->route('order.index');
+                    return redirect()->route('statistic');
                 } else return back()->with('message_error','Вы не можете пока войти, Организация не одобрена');
 
             } else if(Auth::user()->role_id == 3) {

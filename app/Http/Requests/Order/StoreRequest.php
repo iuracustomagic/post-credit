@@ -26,9 +26,9 @@ class StoreRequest extends FormRequest
             'rate' => 'required',
             'items' => 'required|string',
             'email' => 'required',
-            'first_name' => 'required|min:3|string',
-            'last_name' => 'required|min:3|string',
-            'surname' => 'required|min:3|string',
+            'first_name' => 'required|min:2|string',
+            'last_name' => 'required|min:2|string',
+            'surname' => 'required|min:2|string',
             'salesman_id' => 'required|integer',
             'birthday' => 'nullable',
             'phone' => 'required|min:3|string',
@@ -37,6 +37,9 @@ class StoreRequest extends FormRequest
             'company_id' => 'required',
             'division_id' => 'required',
             'credit_type' => 'required|integer',
+            'plan_term' => 'nullable|integer',
+            'initial_fee' => 'nullable|integer',
+            'find_credit' => 'nullable',
 
         ];
     }

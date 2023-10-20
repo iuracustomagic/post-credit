@@ -100,6 +100,7 @@
                                 <th>Дата</th>
                                 <th>Название</th>
                                 <th>Статус</th>
+                                <th>Спецификация</th>
 
                             </tr>
                             </thead>
@@ -117,7 +118,14 @@
                                     <td>
                                         {{$order->statusTitle}}
                                     </td>
-
+                                    <td>
+                                        <form action="{{route('order.specification', $order->id)}}" method="post" >
+                                            @csrf
+                                        <button type="submit" class="btn btn-outline-info">
+                                            <i class="nav-icon fas fa-copy"></i>
+                                        </button>
+                                        </form>
+                                    </td>
 
                                 </tr>
                             @endforeach

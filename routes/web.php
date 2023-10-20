@@ -82,6 +82,7 @@ Route::group(['middleware' => ['auth']],function () {
 
     Route::get('/order', '\App\Http\Controllers\Order\OrderController@index')->name('order.index');
     Route::post('/order', '\App\Http\Controllers\Order\OrderController@store')->name('order.store');
+    Route::post('/specification/{order}', '\App\Http\Controllers\Order\OrderController@downloadSpecification')->name('order.specification');
     Route::get('/check-order/{order}', '\App\Http\Controllers\Order\OrderController@checkOrders')->name('order.check');
 });
 

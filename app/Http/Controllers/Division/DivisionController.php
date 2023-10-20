@@ -8,6 +8,7 @@ use App\Http\Requests\Division\UpdateRequest;
 use App\Models\Company;
 use App\Models\Division;
 use App\Models\DivisionImage;
+use App\Models\DivisionInstallment;
 use App\Models\LeaderPassword;
 use App\Models\Rate;
 use App\Models\User;
@@ -40,9 +41,10 @@ class DivisionController extends Controller
     {
         $rates = Rate::where('type', 'credit')->get();
         $plans = Rate::where('type', 'install_plan')->get();
+        $installments = Rate::where('type', 'installment')->get();
         $companies = Company::all();
 
-        return view('division.create', compact('rates', 'companies', 'plans' ));
+        return view('division.create', compact('rates', 'companies', 'plans', 'installments' ));
     }
     public function show(Division $division)
     {
@@ -59,6 +61,9 @@ class DivisionController extends Controller
         $data = $request->validated();
 
         $images = $request->file('images');
+        if(isset($data['installments'])) {
+            unset( $data['installments']);
+        }
 //        dd($images);
         unset($data['images']);
         $division = Division::firstOrCreate($data);
@@ -74,6 +79,16 @@ class DivisionController extends Controller
             }
 
         }
+        if(isset($data['installments'])) {
+            $installmentsIds = $data['installments'];
+
+            if(isset($installmentsIds)) {
+                foreach ($installmentsIds as $tagId) {
+                    $division->installments()->attach($tagId);
+
+                }
+            }
+        }
 
 
        return redirect()->route('division.index');
@@ -86,12 +101,22 @@ class DivisionController extends Controller
     {
         $rates = Rate::where('type', 'credit')->get();
         $plans = Rate::where('type', 'install_plan')->get();
+        $installments = Rate::where('type', 'installment')->get();
+        $divisionInstallments = DivisionInstallment::where('division_id',$division->id )->get();
+        foreach ($plans as $plan) {
+            foreach ($divisionInstallments as $item) {
+                if($plan['id']==$item['installment_id']) {
+                    $plan['selected'] =true;
+                }
+            }
+        }
+
         if(Auth::user()->role_id == 2) {
             $companies= Company::where('created_by', Auth::id())->get();
         } else $companies = Company::all();
         $images = DivisionImage::where('division_id', $division->id)->get();
 
-        return view('division.edit', compact('division', 'rates', 'companies', 'images', 'plans'));
+        return view('division.edit', compact('division', 'rates', 'companies', 'images', 'plans', 'installments'));
     }
 
     public function update(UpdateRequest $request, Division $division)
@@ -116,6 +141,7 @@ class DivisionController extends Controller
 //            dd($data);
             $images = $request->file('images');
 
+
             if(isset( $images)) {
                 unset($data['images']);
                 foreach ($images as $imagefile) {
@@ -127,6 +153,15 @@ class DivisionController extends Controller
                 }
 
             }
+            if(isset($data['installments'])) {
+                $installmentsIds = $data['installments'];
+                if(isset($installmentsIds)) {
+                    unset($data['installments']);
+                    $division->installments()->sync($installmentsIds);
+
+                }
+            }
+
 
             if($division->update($data)) {
                 return redirect()->route('division.index')->with('flash_message_success', 'Данные обновились!');
@@ -139,7 +174,12 @@ class DivisionController extends Controller
 
     public function delete(Division $division)
     {
-
+$divisionInstallments = DivisionInstallment::where('division_id', $division->id)->get();
+        if($divisionInstallments) {
+            foreach ($divisionInstallments as $item) {
+                $item->delete();
+            }
+        }
         $division->delete();
       $images = DivisionImage::where('division_id', $division->id)->get();
 

@@ -270,4 +270,19 @@ foreach ($refUsers as $refUser) {
         }
         return $value;
     }
+    public function getLeaderManagerAttribute() {
+        $company= Company::where('leader_id', $this->id)->first();
+        $manager = User::where('id',$company->created_by )->first();
+        return $manager['first_name'].' '. $manager['last_name'].' '. $manager['surname'].', тел:   '. $manager['phone'];
+    }
+    public function getSalesmanManagerAttribute() {
+        $userCompany = UserCompany::where('user_id', $this->id)->first();
+        $company= Company::where('id', $userCompany->id)->first();
+        if(isset($company->created_by)) {
+            $manager = User::where('id',$company->created_by )->first();
+            return $manager['first_name'].' '. $manager['last_name'].' '. $manager['surname'].', тел:   '. $manager['phone'];
+        } else return '-';
+//        $manager = User::where('id',$company->created_by )->first();
+
+    }
     }

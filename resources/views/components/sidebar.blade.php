@@ -85,6 +85,11 @@
                             <i class="nav-icon fas fa-users"></i>
                             <p>Личный кабинет</p>
                         </a>
+                        @elseif($user->role_id == 4)
+                            <a href="{{route('order.index')}}" class="nav-link {{$current_route == 'order.index' ? 'active':''}}">
+                                <i class="nav-icon far fa-plus-square"></i>
+                                <p>Отправить заявку</p>
+                            </a>
                         @endif
                 </li>
 

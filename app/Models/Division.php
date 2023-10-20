@@ -35,6 +35,11 @@ class Division extends Model
         ];
     }
 
+    public function installments()
+    {
+        return $this->belongsToMany('App\Models\Rate', 'division_installments', 'division_id', 'installment_id');
+    }
+
     public function getTypeTitleAttribute() {
         return self::getType()[$this->type];
     }

@@ -87,7 +87,7 @@
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="form-group col-sm-4 mr-4">
+                            <div class="form-group col-sm-2 mr-4">
                             <select class="custom-select form-control" name="rate_id" id="exampleSelectBorder" >
                                 <option selected disabled>Ставка по кредиту</option>
                                 @foreach($rates as $rate)
@@ -95,15 +95,25 @@
                                 @endforeach
                             </select>
                             </div>
-                            <div class="form-group col-sm-4 mr-4">
+
+                            <div class="form-group col-sm-2 mr-4">
                                 <select class="custom-select form-control" name="plan_id" >
-                                    <option selected disabled>Срок по рассрочке</option>
+                                    <option selected disabled>Ставка по рассрочке</option>
+                                    @foreach($installments as $installment)
+                                        <option value="{{$installment->id}}">{{$installment->value}}%</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group col-sm-4 mr-3 d-flex">
+                                <p>Срок по рассрочке</p>
+                                <select class="form-control plans" name="installments[] " multiple="multiple" >
                                     @foreach($plans as $plan)
                                         <option value="{{$plan->id}}">{{$plan->term}}</option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
+
 
                         <div class="row mb-3">
                             <div class="form-group col-sm-4 ">
@@ -166,7 +176,7 @@
 
                 const selectImage =  document.getElementById('exampleInputFile');
                 const imageContainer = document.getElementById('imageContainer');
-
+                $('.plans').select2()
 
                 let imagesArray = []
 

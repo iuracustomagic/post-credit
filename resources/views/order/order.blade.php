@@ -27,7 +27,13 @@
         <input name="company_id" value="{{$company->id}}" type="hidden">
         <input name="division_id" value="{{$division->id}}" type="hidden">
 
-<div style="display: flex; justify-content: end; padding-right: 50px">
+<div style="display: flex; justify-content: space-between; padding-right: 50px; padding-left: 50px">
+    <div>
+        <a href="{{route('statistic')}}" class="btn btn-secondary" >
+            <i class="fas fa-backward mr-2"></i> Назад
+        </a>
+
+    </div>
     <a href="{{route('logout')}}"> <svg xmlns="http://www.w3.org/2000/svg" height="1.2em" viewBox="0 0 512 512">
             <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
             <path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z"/></svg>
@@ -59,13 +65,40 @@
             <input type="number" oninput = "getProductQuantity(this)" class="product-quantity" value="1" placeholder="Количество" min="1" max="50" >
             <a class="add-btn" onclick="addInput()">Добавить товар</a>
         </div>
-        <div class="form-row row w-75">
+        <div class=" row w-75 align-items-center" style="padding-left:10%">
+            @if($division['find_credit'] == 'on')
+
+            <div class="form-check col-sm-2 ">
+                <label class="form-check-label" for="find_credit">
+                    Подбор кредита
+                </label>
+                <input type="checkbox" class="form-check-input " name="find_credit" checked id="find_credit">
+            </div>
+            @endif
             <div class="col-sm-2">
                 <p class="mb-2">Кредит/Рассрочка</p>
-                <select class=" " name="credit_type" >
+                <select class="credit-type" name="credit_type" >
                     <option value="1" selected>Кредит</option>
                     <option value="2">Рассрочка</option>
                 </select>
+            </div>
+            <div class="col-sm-2 plan-term-block" style="display: none">
+                <p class="mb-2">Срок рассрочки</p>
+                <select class=" " name="plan_term" >
+                    @foreach($installments as $item)
+                    <option value="{{$item->id}}" selected>{{$item->term}}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row row w-75">
+            <div class="calc-section col-sm-3">
+                <label class="checkbox-wrap" for="">
+                    <span class="checkbox-title">Первоначальный взнос</span>
+                    <input name="initial_fee" class="calc-input" id="fee-input" type="number" value="0" >
+
+                </label>
             </div>
 
             <div class="col-sm-3 calc-section">
@@ -91,7 +124,6 @@
                 </label>
             </div>
         </div>
-
 
         <div class="form-row">
             <button id="submit" type="submit" class="btn btn-warning">Купить в кредит</button>
@@ -138,7 +170,11 @@
     var z = 0;
     const itemsInput = document.getElementById('items')
     const emailSent = document.getElementById('email')
+    const initialFee = document.getElementById('fee-input')
     const quantity = document.querySelector('.product-quantity');
+    const creditType = document.querySelector('.credit-type');
+    const planTerm = document.querySelector('.plan-term-block');
+
 
     const productNames = document.querySelectorAll('.product-name')
 const smsValue = {{$sms_value}};
@@ -156,10 +192,10 @@ const smsValue = {{$sms_value}};
 
     });
 
-let sms = 0;
-if(smsValue<=159) {
-    sms = 159
-} else sms = smsValue;
+        let sms = 0;
+        if(smsValue<=159) {
+            sms = 159
+        } else sms = smsValue;
 
     // Проверить заполнение полей
     function test () {
@@ -188,6 +224,9 @@ function getProductName(input, j=0) {
             initialValue+= Number(item['price'])
         })
         creditInput.value = initialValue + (parseInt(termInput.value) * sms);
+        if(initialFee.value >0) {
+            creditInput.value-=Number(initialFee.value)
+        }
 
         itemsInput.value = JSON.stringify(items)
     }
@@ -198,6 +237,9 @@ function getProductName(input, j=0) {
           sum += item['quantity'] * item['price']
         })
         creditInput.value = sum + (parseInt(termInput.value) * sms)
+        if(initialFee.value >0) {
+            creditInput.value-=Number(initialFee.value)
+        }
 
         itemsInput.value = JSON.stringify(items)
     }
@@ -249,16 +291,29 @@ function getProductName(input, j=0) {
         termRange.value = termInput.value;
     })
 
-
-
+    initialFee.addEventListener('input', function () {
+        creditInput.value -= this.value
+    })
 
     function smsPrice() {
-        smsCost =  (parseInt(termInput.value) * sms);
-        return smsCost;
+        return  (parseInt(termInput.value) * sms);
+
     }
 
     function totalPrice () {
-        allPrice =  ((parseInt(termInput.value) * 199) + parseInt(creditInput.value));
+
+        let sum = 0
+        items.forEach(item => {
+            sum += item['quantity'] * item['price']
+        })
+        if(creditType.value === '1') {
+            creditInput.value = sum + (parseInt(termInput.value) * sms)
+        } else creditInput.value = sum
+
+
+        if(initialFee.value >0) {
+            creditInput.value-=Number(initialFee.value)
+        }
     }
 
     function emailStick () {
@@ -271,7 +326,12 @@ function getProductName(input, j=0) {
     function monthlyPrice () {
         var monthlyInterest = interest / 100 / 12;
         var x = Math.pow(1 + monthlyInterest, termInput.value);
-        var tempCredit = parseInt(creditInput.value) + parseInt(smsCost);
+        let tempCredit = 0;
+
+        if(creditType.value === '1'){
+            tempCredit = parseInt(creditInput.value) + parseInt(parseInt(termInput.value) * sms);
+        } else tempCredit = parseInt(creditInput.value)
+
         var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);
         monthlyPayment = monthlyPayment | 0;
         let results = document.getElementById('results-input');
@@ -280,70 +340,101 @@ function getProductName(input, j=0) {
 
 
 
-    smsPrice();
+
     totalPrice();
     emailStick();
     monthlyPrice();
-    test();
+
 
 
 
     for (const input of inputs) {
         input.addEventListener('input', function () {
-            smsPrice();
+
             totalPrice();
             emailStick();
             monthlyPrice();
-            test();
+
         })
     }
 
     prodRow.addEventListener('keyup', function() {
-        smsPrice();
+
         totalPrice();
         emailStick();
         monthlyPrice();
-        test();
+
     })
 
 
 
-
-    setInterval(test, 500);
 
 
 
     document.getElementById('term-range').addEventListener('click', function() {
+        monthlyPrice();
+        totalPrice();
 
-        let sum = 0
-        items.forEach(item => {
-            sum += item['quantity'] * item['price']
-        })
-        creditInput.value = sum + (parseInt(termInput.value) * sms)
-
-        itemsInput.value = JSON.stringify(items)
 
     })
-
-
-    btn.addEventListener('click', function () {
-
+    function checkInputItems() {
+{{--        @php--}}
+{{--                 session_start();--}}
+{{--        @endphp--}}
         document.querySelectorAll('.product-price').forEach(function (element) {
             if(element.value === '') {
-                btn.setAttribute('disabled', 'disabled');
+                // btn.setAttribute('disabled', 'disabled');
+{{--                @php--}}
+{{--                $_SESSION['flash_message_error'] = "Введите все поля";--}}
+{{--                @endphp--}}
                 alert('Введите все поля')
+                return false
             }
         })
         document.querySelectorAll('.product-quantity').forEach(function (element) {
             if(element.value === '') {
-                btn.setAttribute('disabled', 'disabled');
+                // btn.setAttribute('disabled', 'disabled');
+{{--                @php--}}
+{{--                    $_SESSION['flash_message_error'] = "Введите все поля";--}}
+{{--                @endphp--}}
                 alert('Введите все поля')
+                return false
             }
         })
-        // alert('Введите все поля')
-        // form.submit();
-})
+        document.querySelectorAll('.product-name').forEach(function (element) {
+            if(element.value === '') {
+                // $('.alert_message').text('Введите все поля')
+{{--                @php--}}
+{{--                    $_SESSION['flash_message_error'] = "Введите все поля";--}}
+{{--                @endphp--}}
+                alert('Введите все поля')
+                return false
+            }
+        })
+        return true
+    }
+    // $('#submit').click(()=>{
+    //     console.log(checkInputItems())
+    //         if(checkInputItems()) {
+    //             console.log( $('#form'))
+    //             $('form#form').submit()
+    //         }
+    //     })
+    $('form#form').on('submit', function(event) {
+       if(checkInputItems()) {
+           return true
+       } else event.preventDefault();
+    })
 
+    creditType.addEventListener('change', function (element) {
+        monthlyPrice();
+        totalPrice();
+        if(element.target.value === '2') {
+            planTerm.style.display = "block"
+        } else {
+            planTerm.style.display = "none"
+        }
+    })
 
 </script>
 </body>

@@ -32,6 +32,7 @@ class UpdateRequest extends FormRequest
             'company_id' => 'required|string',
             'rate_id' => 'required|integer',
             'plan_id' => 'nullable|integer',
+            'installments' => 'nullable|array',
             'price_sms' => 'required|integer',
             'find_credit' => 'nullable',
             'find_credit_value' => 'nullable|string',
