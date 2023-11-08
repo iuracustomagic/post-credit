@@ -19,9 +19,14 @@ class WebHookController extends Controller
         // In my own case, I will add the delay function
 //        dump($request);
 
-       $id = $request['order_number'];
+       $id = $request['id'];
        $status= $request['status'];
 //        dd($id);
-       Order::where('order_id', $id)->update(['status'=>$status]);
+      $order= Order::where('order_id', $id)->update(['status'=>$status]);
+      if($order) {
+          return response("ок", 200);
+      } else return response([
+          'message' => 'Order not found'
+      ], 400);
     }
 }

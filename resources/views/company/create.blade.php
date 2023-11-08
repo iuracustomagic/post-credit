@@ -1,3 +1,9 @@
+@php
+    use Illuminate\Support\Facades\Auth;
+
+    $currentUser = Auth::user();
+@endphp
+
 @extends('layouts.main')
 
 @section('content')
@@ -26,17 +32,32 @@
         <!-- Main content -->
         <section class="content">
             <div class="container-fluid ml-4 ">
-                <div class="w-75 d-flex justify-content-end">
-                    <div class=" fs-4">
-                        <span class="mr-2">Статус:</span>
-                        <span class="text-primary">Новая</span>
-                    </div>
 
-                </div>
                 <div class="row mt-4 ">
                     <form action="{{route('company.store')}}" method="post" class="w-100" enctype="multipart/form-data">
                         @csrf
-                        <input type="hidden" class="form-control" name="created_by" value="{{\Illuminate\Support\Facades\Auth::id()}}" >
+                        <div class="w-75 d-flex justify-content-end">
+                            <div class=" fs-5 mr-4">
+                                <span class="mr-2">Статус:</span>
+                                <span class="text-primary">Новая</span>
+                            </div>
+                            @if($currentUser->role_id ==1)
+                            <div class=" fs-5 d-flex">
+                                <label class="mr-2">Создана:</label>
+                                <select name="created_by" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="0" tabindex="-1" aria-hidden="true">
+                                    <option  value="{{$currentUser->id}}">Администратором</option>
+                                    @foreach($managers as $manager)
+                                        <option value="{{$manager->id}}">{{$manager->first_name.' '.$manager->last_name}}</option>
+                                    @endforeach
+
+                                </select>
+
+                            </div>
+                            @else
+                                <input type="hidden" class="form-control" name="created_by" value="{{$currentUser->id}}" >
+                                @endif
+                        </div>
+
                         <input type="hidden" class="form-control" name="status" value="1" >
                         <input type="hidden" class="form-control" name="role_id" value="3" >
                     <nav class="w-100">
@@ -229,6 +250,8 @@
                 const imageContainer = document.getElementById('imageContainer');
 
                 const allInputs = document.querySelectorAll('input[type="text"]')
+
+                $('.select2').select2()
 
                 for (let i = 0; i < allInputs.length; i++) {
                     allInputs[i].addEventListener("change", function() {

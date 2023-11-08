@@ -17,7 +17,7 @@
 <body>
 <div style="padding-top:50px">
     @include('components.flash_message')
-    <form action="{{route('order.store')}}" id="form" method="post" class="w-100" enctype="multipart/form-data">
+    <form action="{{route('order.store')}}" onsubmit="return login();" id="form" method="post" class="w-100" enctype="multipart/form-data">
         @csrf
         <input name="salesman_id" value="{{$user->id}}" type="hidden">
         <input name="status" value="new" type="hidden">
@@ -61,12 +61,12 @@
         </div>
         <div class="form-row prod-row" id="rowProd">
             <input type="text" id="product" oninput="getProductName(this)"  placeholder="Товар" class="product-name" >
-            <input type="number" oninput = "getProductPrice(this)"  class="product-price" placeholder="Цена" min="3000" max="290000" >
+            <input type="number" oninput = "getProductPrice(this)"  class="product-price" placeholder="Цена" min="10" max="500000" >
             <input type="number" oninput = "getProductQuantity(this)" class="product-quantity" value="1" placeholder="Количество" min="1" max="50" >
-            <a class="add-btn" onclick="addInput()">Добавить товар</a>
+            <a class="add-btn" id="add_btn" onclick="checkAddInputs()">Добавить товар</a>
         </div>
-        <div class=" row w-75 align-items-center" style="padding-left:10%">
-            @if($division['find_credit'] == 'on')
+        <div class=" row w-75 align-items-center " style="padding-left:10%">
+            @if($division['find_credit'] == 'on' && $division['hide_find_credit'] != 'on')
 
             <div class="form-check col-sm-2 ">
                 <label class="form-check-label" for="find_credit">
@@ -75,21 +75,40 @@
                 <input type="checkbox" class="form-check-input " name="find_credit" checked id="find_credit">
             </div>
             @endif
-            <div class="col-sm-2">
-                <p class="mb-2">Кредит/Рассрочка</p>
-                <select class="credit-type" name="credit_type" >
-                    <option value="1" selected>Кредит</option>
-                    <option value="2">Рассрочка</option>
-                </select>
+{{--            <div class="col-sm-2">--}}
+{{--                <p class="mb-2">Кредит/Рассрочка</p>--}}
+{{--                <select class="credit-type" name="credit_type" >--}}
+{{--                    <option value="1" selected>Кредит</option>--}}
+{{--                    <option value="2">Рассрочка</option>--}}
+{{--                </select>--}}
+{{--            </div>--}}
+
+
+                <div class="col-sm-3 btn-group" role="group" aria-label="Basic radio toggle button group">
+                    <input type="radio" class="btn-check credit-type" name="credit_type" onclick="handleTypeClick(this);" id="btnradio1" value="1" autocomplete="off" checked>
+                    <label class="btn btn-outline-primary" for="btnradio1">Кредит</label>
+
+                    <input type="radio" class="btn-check credit-type" name="credit_type" onclick="handleTypeClick(this);" id="btnradio2" value="2" autocomplete="off">
+                    <label class="btn btn-outline-primary" for="btnradio2">Рассрочка</label>
+
+                </div>
+
+{{--                </div>--}}
+            <div class="col-sm-4 row align-items-center plan-term-block" style="display: none">
+                <div class="col-sm-6">
+                    <p class="">Срок рассрочки</p>
+                </div>
+              <div class="col-sm-6">
+                  <select class=" " name="plan_term" >
+                      @foreach($installments as $item)
+                          <option value="{{$item->id}}" selected>{{$item->term}}</option>
+                      @endforeach
+                  </select>
+              </div>
+
             </div>
-            <div class="col-sm-2 plan-term-block" style="display: none">
-                <p class="mb-2">Срок рассрочки</p>
-                <select class=" " name="plan_term" >
-                    @foreach($installments as $item)
-                    <option value="{{$item->id}}" selected>{{$item->term}}</option>
-                    @endforeach
-                </select>
-            </div>
+
+
         </div>
 
         <div class="form-row row w-75">
@@ -156,17 +175,20 @@
     let tellInput = document.querySelector('#tell');
     let bDate = document.querySelector('#bdate');
     let productInput = document.querySelector('#product');
+    const productName = document.querySelectorAll('.product-name');
     const productPrice = document.querySelectorAll('.product-price');
     const productQuantity = document.querySelectorAll('.product-quantity');
     const creditInput = document.getElementById('credit-input');
     const termInput = document.querySelector('#term-input');
     const termRange = document.querySelector('#term-range');
-    const inputs = document.querySelectorAll('input');
+    const inputs = document.querySelectorAll('input[type="number"]');
     const email = '@gmail.com';
     let btn = document.querySelector('#submit');
     let form = document.querySelector('#form');
+    let addBtn = document.querySelector('#add_btn');
     var results = document.getElementById('results-input').readOnly = true;
-    var interest = 21;
+
+
     var z = 0;
     const itemsInput = document.getElementById('items')
     const emailSent = document.getElementById('email')
@@ -174,8 +196,36 @@
     const quantity = document.querySelector('.product-quantity');
     const creditType = document.querySelector('.credit-type');
     const planTerm = document.querySelector('.plan-term-block');
+    const findCredit = document.getElementById('find_credit');
+let findCreditValue = 0;
+    let items = [{
+        name: '',
+        price: 0,
+        quantity: 1
+    }]
+    let sms = 0;
+const hideFineCredit = '{{$division->hide_find_credit}}';
+
+if(findCredit) {
+    if(findCredit.value === 'on') {
+        findCreditValue = {{isset($division->find_credit_value) ? $division->find_credit_value :0  }}
+    } else findCreditValue =0
+    findCredit.addEventListener('change', (element)=>{
+
+        if(element.target.checked) {
+            findCreditValue = {{isset($division->find_credit_value) ? $division->find_credit_value :0 }}
+        } else findCreditValue =0;
+        totalPrice()
+        monthlyPrice()
+    })
+} else if(hideFineCredit ==='on') {
+    findCreditValue= {{isset($division->find_credit_value) ? $division->find_credit_value :0 }};
+    totalPrice()
+    monthlyPrice()
+}
 
 
+    // console.log(findCreditValue)
     const productNames = document.querySelectorAll('.product-name')
 const smsValue = {{$sms_value}};
     $(document).ready(function () {
@@ -192,7 +242,7 @@ const smsValue = {{$sms_value}};
 
     });
 
-        let sms = 0;
+
         if(smsValue<=159) {
             sms = 159
         } else sms = smsValue;
@@ -206,11 +256,7 @@ const smsValue = {{$sms_value}};
             btn.setAttribute('disabled', 'disabled');
         }
     }
-    let items = [{
-        name: '',
-        price: 0,
-        quantity: 1
-    }]
+
 
 function getProductName(input, j=0) {
         items[j]['name'] = input.value
@@ -243,20 +289,35 @@ function getProductName(input, j=0) {
 
         itemsInput.value = JSON.stringify(items)
     }
+    productName.forEach(function (element) {
 
+        if (element.value === '') {
+            addBtn.disabled  = true
+        } else addBtn.disabled  =false
+    })
+
+    function showDiv() {
+        let div = document.createElement("div");
+        div.innerHTML = '<div id="newAlert" class="alert alert-info" role="alert" style=" position: absolute; top:10%; right: 10%">Введите все поля</div>'
+        document.body.appendChild(div);
+        $("#newAlert").delay(3000).fadeOut("slow", function() {
+            document.body.removeChild(div);
+        });
+    }
     // Добавление новых товаров
     function addInput() {
- items.push({
-     name: '',
-     price: 0,
-     quantity: 1
- })
 
-        var profile = document.getElementById('rowProd');
-        var div = document.createElement('div');
+
+        items.push({
+             name: '',
+             price: 0,
+             quantity: 1
+         })
+        const profile = document.getElementById('rowProd');
+        const div = document.createElement('div');
         div.classList = 'form-row prod-row ' + 'form-row--' + ++z;
         div.innerHTML = `<input type="text" id="product" oninput = "getProductName(this, z)" placeholder="Товар" class="product-name">
-            <input  type="number" id='price_${z}' oninput = "getProductPrice(this, z)" class="product-price" placeholder="Цена" min="3000" max="290000" >
+            <input  type="number" id='price_${z}' oninput = "getProductPrice(this, z)" class="product-price" placeholder="Цена" min="10" max="500000" >
             <input type="number" id='quantity_${z}' oninput = "getProductQuantity(this, z)" class="product-quantity" value="1" placeholder="Количество" min="1" max="50" >
              <a class="del-btn" onclick="delInput()">Удалить товар</a>`;
         profile.appendChild(div);
@@ -306,14 +367,18 @@ function getProductName(input, j=0) {
         items.forEach(item => {
             sum += item['quantity'] * item['price']
         })
-        if(creditType.value === '1') {
+
+        if(creditType.value === '1' && creditType.checked ===true) {
             creditInput.value = sum + (parseInt(termInput.value) * sms)
         } else creditInput.value = sum
-
+        if(findCreditValue>0) {
+            creditInput.value= Number(creditInput.value) + Number(findCreditValue)
+        }
 
         if(initialFee.value >0) {
             creditInput.value-=Number(initialFee.value)
         }
+
     }
 
     function emailStick () {
@@ -324,14 +389,21 @@ function getProductName(input, j=0) {
     }
 
     function monthlyPrice () {
+
+        let tempCredit = 0;
+        let interest =0;
+        if(creditType.value === '1'){
+            const rateValue = String({{$rate_value}});
+            // console.log(rateValue)
+            interest = rateValue.replace(/,/g, '.')
+            tempCredit = parseInt(creditInput.value);
+        } else {
+            const installmentValue = '{{$installment_value}}';
+            interest = installmentValue.replace(/,/g, '.')
+            tempCredit = parseInt(creditInput.value)
+        }
         var monthlyInterest = interest / 100 / 12;
         var x = Math.pow(1 + monthlyInterest, termInput.value);
-        let tempCredit = 0;
-
-        if(creditType.value === '1'){
-            tempCredit = parseInt(creditInput.value) + parseInt(parseInt(termInput.value) * sms);
-        } else tempCredit = parseInt(creditInput.value)
-
         var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);
         monthlyPayment = monthlyPayment | 0;
         let results = document.getElementById('results-input');
@@ -377,41 +449,55 @@ function getProductName(input, j=0) {
 
 
     })
-    function checkInputItems() {
-{{--        @php--}}
-{{--                 session_start();--}}
-{{--        @endphp--}}
-        document.querySelectorAll('.product-price').forEach(function (element) {
-            if(element.value === '') {
-                // btn.setAttribute('disabled', 'disabled');
-{{--                @php--}}
-{{--                $_SESSION['flash_message_error'] = "Введите все поля";--}}
-{{--                @endphp--}}
-                alert('Введите все поля')
-                return false
-            }
-        })
-        document.querySelectorAll('.product-quantity').forEach(function (element) {
-            if(element.value === '') {
-                // btn.setAttribute('disabled', 'disabled');
-{{--                @php--}}
-{{--                    $_SESSION['flash_message_error'] = "Введите все поля";--}}
-{{--                @endphp--}}
-                alert('Введите все поля')
-                return false
-            }
-        })
+    function checkAddInputs() {
+        let check = true;
         document.querySelectorAll('.product-name').forEach(function (element) {
             if(element.value === '') {
-                // $('.alert_message').text('Введите все поля')
-{{--                @php--}}
-{{--                    $_SESSION['flash_message_error'] = "Введите все поля";--}}
-{{--                @endphp--}}
-                alert('Введите все поля')
-                return false
+                // btn.setAttribute('disabled', 'disabled');
+                showDiv()
+                check=false;
+                return false;
+
             }
         })
-        return true
+        document.querySelectorAll('.product-price').forEach(function (element) {
+
+            if(element.value === '') {
+                showDiv()
+                check=false;
+                return false;
+                // alert('Введите все поля')
+
+            }
+        })
+        if(check) {
+            addInput()
+        }
+
+    }
+
+    function checkInputItems() {
+        let check = true;
+        document.querySelectorAll('.product-name').forEach(function (element) {
+            if(element.value === '') {
+                // btn.setAttribute('disabled', 'disabled');
+                showDiv()
+                check=false;
+                return false;
+
+            }
+        })
+        document.querySelectorAll('.product-price').forEach(function (element) {
+            // console.log('productPrice', element.value)
+            if(element.value === '' || element.value == 0) {
+                showDiv()
+                check=false;
+                return false;
+
+            }
+        })
+        return check;
+
     }
     // $('#submit').click(()=>{
     //     console.log(checkInputItems())
@@ -420,21 +506,47 @@ function getProductName(input, j=0) {
     //             $('form#form').submit()
     //         }
     //     })
-    $('form#form').on('submit', function(event) {
-       if(checkInputItems()) {
-           return true
-       } else event.preventDefault();
+
+    function login() {
+        if(checkInputItems()) {
+                   return true
+               } else {
+                   // showDiv()
+            alert('Введите все поля');
+                   return false;
+               }
+    }
+
+
+function handleTypeClick(el){
+
+    let sum = 0
+    items.forEach(item => {
+        sum += item['quantity'] * item['price']
     })
 
-    creditType.addEventListener('change', function (element) {
-        monthlyPrice();
-        totalPrice();
-        if(element.target.value === '2') {
-            planTerm.style.display = "block"
-        } else {
-            planTerm.style.display = "none"
-        }
-    })
+    if(el.value === '2') {
+        planTerm.style.display = "flex"
+        creditInput.value = sum
+    } else {
+        planTerm.style.display = "none"
+        creditInput.value = sum + (parseInt(termInput.value) * sms)
+    }
+    if(findCreditValue>0) {
+        creditInput.value= Number(creditInput.value) + Number(findCreditValue)
+    }
+    monthlyPrice();
+}
+
+    // creditType.addEventListener('change', function (element) {
+    //     monthlyPrice();
+    //     totalPrice();
+    //     if(element.target.value === '2') {
+    //         planTerm.style.display = "block"
+    //     } else {
+    //         planTerm.style.display = "none"
+    //     }
+    // })
 
 </script>
 </body>

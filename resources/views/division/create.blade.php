@@ -74,14 +74,21 @@
 
                         </div>
                         <div class="row mb-3">
-                            <div class="form-check col-sm-4 pl-5 mr-4 ">
+                            <div class="form-check col-sm-2 pl-5 mr-4 ">
                                 <input class="form-check-input" type="checkbox" name="find_credit"  id="find_credit">
                                 @error('find_credit')<p class="text-danger"> {{$message}}</p>@enderror
                                 <label class="form-check-label" for="find_credit">
                                     Подбор кредита
                                 </label>
                             </div>
-                            <div class="form-group col-sm-4 ">
+                            <div class="form-check col-sm-3 pl-5 mr-4 ">
+                                <input class="form-check-input" type="checkbox" name="hide_find_credit"  id="hide_find_credit">
+                                @error('hide_find_credit')<p class="text-danger"> {{$message}}</p>@enderror
+                                <label class="form-check-label" for="hide_find_credit">
+                                   Скрыть подбор кредита
+                                </label>
+                            </div>
+                            <div class="form-group col-sm-3 ">
                             <input class="form-control " name="find_credit_value" placeholder="Цена" type="text">
                                 @error('find_credit_value')<p class="text-danger"> {{$message}}</p>@enderror
                             </div>
@@ -93,7 +100,9 @@
                                 @foreach($rates as $rate)
                                 <option value="{{$rate->id}}">{{$rate->value}}%</option>
                                 @endforeach
+
                             </select>
+                                @error('rate_id')<p class="text-danger"> {{$message}}</p>@enderror
                             </div>
 
                             <div class="form-group col-sm-2 mr-4">
@@ -103,6 +112,7 @@
                                         <option value="{{$installment->id}}">{{$installment->value}}%</option>
                                     @endforeach
                                 </select>
+                                @error('plan_id')<p class="text-danger"> {{$message}}</p>@enderror
                             </div>
                             <div class="form-group col-sm-4 mr-3 d-flex">
                                 <p>Срок по рассрочке</p>
@@ -111,6 +121,7 @@
                                         <option value="{{$plan->id}}">{{$plan->term}}</option>
                                     @endforeach
                                 </select>
+                                @error('installments')<p class="text-danger"> {{$message}}</p>@enderror
                             </div>
                         </div>
 

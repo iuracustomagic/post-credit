@@ -16,6 +16,11 @@ class Order extends Model
     const STATUS_SIGNED = 'signed';
     const STATUS_CANCELED = 'canceled';
     const STATUS_REJECTED = 'rejected';
+    const STATUS_FAILED = 'failed';
+
+    const TYPE_CREDIT = 1;
+    const TYPE_INSTALLMENT = 2;
+    const TYPE_NULL = null;
 
     static function getStatus() {
         return [
@@ -25,11 +30,23 @@ class Order extends Model
             self::STATUS_SIGNED => 'Подписана',
             self::STATUS_CANCELED => 'Отменена',
             self::STATUS_REJECTED => 'Отказ',
+            self::STATUS_FAILED => 'Не отправлено',
         ];
     }
 
+    static function getType() {
+        return [
+            self::TYPE_CREDIT => 'Кредит',
+            self::TYPE_INSTALLMENT => 'Рассрочка',
+            self::TYPE_NULL => '',
+
+        ];
+    }
     public function getStatusTitleAttribute() {
         return self::getStatus()[$this->status];
+    }
+    public function getTypeTitleAttribute() {
+        return self::getType()[$this->credit_type];
     }
     public function getCompanyNameAttribute()
     {

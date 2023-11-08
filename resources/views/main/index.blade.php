@@ -93,13 +93,17 @@
                 <!-- /.row -->
                 <div class="row">
                     <div class="col-12">
-                        <table class="table table-hover text-nowrap" id="orderTable">
+                        @include('components.flash_message')
+                        <table class="table table-hover text-nowrap" id="orderTable"  data-order='[[ 3, "desc" ]]'>
                             <thead>
                             <tr>
+                                <th>Статус</th>
+                                <th>№ договора</th>
                                 <th>ФИО</th>
                                 <th>Дата</th>
                                 <th>Название</th>
-                                <th>Статус</th>
+
+                                <th>Тип</th>
                                 <th>Спецификация</th>
 
                             </tr>
@@ -108,6 +112,25 @@
                             @foreach($orders as $order)
                                 <tr >
                                     <td>
+                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    {{$order->statusTitle}}
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Проверить статус</a></li>
+                                                    @if($order->status != 'failed')
+                                                        <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
+                                                    @endif
+                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {{$order->order_id}}
+                                    </td>
+                                    <td>
                                         {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
                                     </td>
                                     <td> {{$order->created_at}}</td>
@@ -115,9 +138,8 @@
                                         {{$order->companyName}}/
                                         @endif
                                         {{$order->divisionAddress}}</td>
-                                    <td>
-                                        {{$order->statusTitle}}
-                                    </td>
+                                    <td> {{$order->typeTitle}}</td>
+
                                     <td>
                                         <form action="{{route('order.specification', $order->id)}}" method="post" >
                                             @csrf
@@ -196,7 +218,8 @@
                             "previous": "<"
                         }
                     },
-                    dropup: true,
+                    order: [[3, 'desc']],
+                    // dropup: true,
                     buttons: [
                         {
                             text: 'csv',
@@ -231,10 +254,10 @@
                             }
                         },
                     ],
-                    columnDefs: [{
-                        orderable: false,
-                        targets: -1
-                    }]
+                    // columnDefs: [{
+                    //     orderable: false,
+                    //     targets: -1
+                    // }]
                 });
                 // table.buttons( '.export' ).remove();
 

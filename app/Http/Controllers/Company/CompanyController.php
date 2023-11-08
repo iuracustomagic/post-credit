@@ -46,8 +46,11 @@ class CompanyController extends Controller
 
     public function create()
     {
+        if(Auth::user()->role_id == 1) {
+            $managers= User::where('role_id',2 )->get();
+        } else $managers=[];
 
-        return view('company.create');
+        return view('company.create', compact('managers'));
     }
     public function show(Company $company)
     {

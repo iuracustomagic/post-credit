@@ -32,7 +32,7 @@
 
                 </div>
                 <div class="row w-75">
-                    <form action="{{route('manager.update', $user->id)}}" method="post" class="w-100">
+                    <form action="{{route('manager.update', $user->id)}}" method="post" class="w-100 ">
                         @csrf
                         @method('patch')
                         <nav class="w-100">
@@ -43,7 +43,7 @@
                                 <a class="nav-item nav-link fs-5" id="company-tab" data-toggle="tab" href="#company-rating" role="tab" aria-controls="company-rating" aria-selected="false">Организации</a>
                             </div>
                         </nav>
-                        <div class="tab-content p-3" id="nav-tabContent" style="height: 500px">
+                        <div class="tab-content p-3" id="nav-tabContent" style="min-height: 600px">
                             <div class="tab-pane fade show active" id="product-desc" role="tabpanel" aria-labelledby="product-desc-tab">
 
                         <div class="row  ">

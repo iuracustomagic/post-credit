@@ -62,7 +62,7 @@
                         <div class="small-box bg-info">
                             <div class="inner">
                                 <p>Всего заявок</p>
-                                <h3>{{count($orders)}}</h3>
+                                <h3>{{count($all)}}</h3>
                             </div>
 
                         </div>
@@ -107,10 +107,11 @@
                 <div class="row">
                     <div class="col-12">
                         @include('components.flash_message')
-                        <table class="table table-hover text-nowrap w-100 " id="orderTable" >
+                        <table class="table table-hover text-nowrap w-100 " id="orderTable" data-order='[[ 4, "desc" ]]'>
                             <thead>
                             <tr>
                                 <th>Статус</th>
+                                <th>№ договора</th>
                                 <th>ФИО</th>
                                 <th>Менеджер</th>
                                 <th>Дата</th>
@@ -121,6 +122,7 @@
                                 <th>Сумма кредита</th>
                                 <th>Стоимость смс</th>
                                 <th>Первоначальный взнос</th>
+                                <th>Тип</th>
                                 <th>Товары</th>
 
 
@@ -130,10 +132,27 @@
                             @foreach($orders as $order)
                                 <tr >
                                     <td>
-                                        <a href="{{route('order.check', $order->id)}}">{{$order->statusTitle}}</a>
+                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    {{$order->statusTitle}}
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Проверить статус</a></li>
+                                                    @if($order->status != 'failed')
+                                                    <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
+                                                    @endif
+                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
                                     </td>
                                     <td>
-                                        {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
+                                        {{$order->order_id}}
+                                    </td>
+                                    <td>
+                                        {{$order->last_name.' '.$order->first_name.' '.$order->surname}}
                                     </td>
                                     <td>
                                         <p class="mb-1">{{$order->managerName}}/</p>
@@ -147,6 +166,7 @@
                                     <td> {{$order->sum_credit}}</td>
                                     <td> {{$order->smsValue}}</td>
                                     <td> {{$order->initial_fee}}</td>
+                                    <td> {{$order->typeTitle}}</td>
                                     <td> {{$order->productName}}</td>
 
                                 </tr>
@@ -197,7 +217,8 @@
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
-
+{{--@dump($orders)--}}
+{{--@dump($orders['total'])--}}
         </section>
         <!-- /.content -->
 @endsection
@@ -212,7 +233,8 @@
                 $('.select2bs4').select2({
                     theme: 'bootstrap4'
                 })
-
+{{--let orders =JSON.parse({{$orders}})--}}
+//     console.log(orders)
                 $(".ul-export li").click(function() {
                     var i = $(this).index() + 1
                     var table = $('#orderTable').DataTable();
@@ -254,7 +276,7 @@
                             "previous": "<"
                         }
                     },
-                    // dropup: true,
+                   order: [[4, 'desc']],
                     buttons: [
                         {
                             text: 'csv',

@@ -35,6 +35,7 @@ class StoreRequest extends FormRequest
             'installments' => 'nullable|array',
             'price_sms' => 'required|integer',
             'find_credit' => 'nullable',
+            'hide_find_credit' => 'nullable',
             'find_credit_value' => 'nullable|string',
 
         ];

@@ -33,7 +33,15 @@ class OrderController extends Controller
             $division = Division::where('id',$userDivision->division_id )->first();
 
             $rate = Rate::where('id', $division->rate_id)->first();
-            $rate_value = $rate->value;
+            if(isset($rate)) {
+                $rate_value = $rate->value;
+            } else $rate_value = 1;
+
+            $installment = Rate::where('id', $division->plan_id)->first();
+          if(isset($installment)) {
+              $installment_value = $installment->value;
+          } else $installment_value = 1;
+
             $sms_value = $division->price_sms;
             $planTerms = DivisionInstallment::where('division_id',$userDivision->division_id)->get();
             $installments = [];
@@ -42,7 +50,8 @@ class OrderController extends Controller
                 $installments[]=Rate::where('id', $planTerm->installment_id)->first();
             }
         } else {
-            $rate_value = '';
+            $rate_value = 1;
+            $installment_value = 1;
             $division = '';
             $sms_value = '';
             $installments=[];
@@ -52,7 +61,7 @@ class OrderController extends Controller
         } else  $company = '';
 
 
-        return view('order.order', compact('user','company', 'division','rate_value', 'sms_value', 'installments'));
+        return view('order.order', compact('user','company', 'division','rate_value', 'installment_value', 'sms_value', 'installments'));
     }
     public function store(StoreRequest $request)
     {
@@ -91,6 +100,9 @@ class OrderController extends Controller
                 $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_credit_value'], 'quantity'=>(string)1];
                 $sum+=$division['find_credit_value'];
             }
+        } elseif($division['hide_find_credit'] == 'on' && isset($division['find_credit_value'])) {
+            $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_credit_value'], 'quantity'=>(string)1];
+            $sum+=$division['find_credit_value'];
         }
 
         if($data['initial_fee'] >0) {
@@ -106,7 +118,7 @@ class OrderController extends Controller
             $promoCode=$division->planValue;
             $installment = Rate::where('id', $data['plan_term'])->first();
             $installmentValue = ($sum*$installment['value'])/100;
-            $items[0]['price']-=$installmentValue;
+            $items[0]['price']-=round($installmentValue);
 //            $items[] = ['name'=>'Процент рассрочки', 'price'=>(string)-$installmentValue, 'quantity'=>(string)1];
             $sum -= $installmentValue;
         }
@@ -121,6 +133,10 @@ class OrderController extends Controller
         'shopId'=> $shopId,
         'showcaseId'=> $showcaseId,
          "orderNumber"=> $orderNumber,
+//         "webhookURL"=> 'https://xn--b1aeckdhc1bmragcd.xn--p1ai/webhook-order',
+//         "successURL"=> 'https://xn--b1aeckdhc1bmragcd.xn--p1ai',
+//         "failURL"=> 'https://xn--b1aeckdhc1bmragcd.xn--p1ai',
+//         "returnURL"=> 'https://xn--b1aeckdhc1bmragcd.xn--p1ai',
         'values'=> [
             'contact'=> [
                 'fio'=> [
@@ -134,9 +150,11 @@ class OrderController extends Controller
         ]
                 ];
 
-//        dd(json_encode($post, JSON_UNESCAPED_UNICODE));
 
-
+//if($division['shop_id'] == '4dcaa2b7-5cf1-4be2-b05b-3406ca7273b6' && $division['show_case_id'] == 'a3b40311-2483-46c7-995d-7f96a0197968') {
+//    $post['webhookURL'] = 'https://xn--b1aeckdhc1bmragcd.xn--p1ai/webhook-order/OOO987654356667romashka';
+//}
+//       dd(json_encode($post, JSON_UNESCAPED_UNICODE));
 
         $response = Http::post('https://forma.tinkoff.ru/api/partners/v2/orders/create', $post);
         $data['order_id']=$orderNumber;
@@ -151,7 +169,10 @@ class OrderController extends Controller
 
         if(isset($response->json()['link'])) {
             return redirect($response->json()['link']);
-        } else return back()->with('flash_message_error', 'Данные не отправились!');
+        } else {
+            $order->update(['status'=>'failed']);
+            return back()->with('flash_message_error', 'Данные не отправились!');
+        }
 
     }
     public function checkOrders(Order $order) {
@@ -164,10 +185,35 @@ class OrderController extends Controller
             'Authorization' => 'Basic ' . $code,
         ])->get('https://forma.tinkoff.ru/api/partners/v2/orders/'.$order['order_id'].'/info');
         $result = json_decode($response, true);
+//        dd($result);
         if(isset($result['status'])) {
             Order::where('id', $order['id'])->update(['status'=>$result['status']]);
-            return back()->with('flash_message_success', $result['status']);
-        } else return back()->with('flash_message_success', 'Статус не известен');
+            switch ($result['status']) {
+                case 'inprogress':
+                    $status = 'В процессе';
+                    break;
+                case 'new':
+                    $status = 'Новая';
+                    break;
+                case 'approved':
+                    $status = 'Одобрена';
+                    break;
+                case 'signed':
+                    $status = 'Подписана';
+                    break;
+                case 'canceled':
+                    $status = 'Отменена';
+                    break;
+                case 'rejected':
+                    $status = 'Отказ';
+                    break;
+                default:
+                    $status = 'Не известен';
+
+            }
+
+            return back()->with('flash_message_success', $status);
+        } else return back()->with('flash_message_success', $result);
 //        dd($result);
 //        return back()->with('flash_message_success', $result['status']);
     }
@@ -214,5 +260,33 @@ class OrderController extends Controller
         $xmlWriter->save($pdfLocation, true);
 
         return response()->download($pdfLocation)->deleteFileAfterSend(true);
+    }
+    public function continueOrder(Order $order)  {
+
+    $response = json_decode($order['response']);
+
+//    dd($link);
+        if(isset($response->link)) {
+            return redirect($response->link);
+        } else return back()->with('flash_message_error', 'Заявка не найдена');
+
+    }
+
+    public function cancelOrder(Order $order)  {
+        $division = Division::where('id', $order['division_id'])->first();
+        $code = base64_encode($division->show_case_id.':pyzPYF7Y5S7Liq@');
+
+
+        $response =  Http::withHeaders([
+            'Authorization' => 'Basic ' . $code,
+        ])->get('https://forma.tinkoff.ru/api/partners/v2/orders/'.$order['order_id'].'/cancel');
+        $result = json_decode($response, true);
+        if($result) {
+            if(isset($result['status'])) {
+                Order::where('id', $order['id'])->update(['status'=>$result['status']]);
+                return back()->with('flash_message_success', $result['status']);
+            } else return back()->with('flash_message_success', 'Статус не известен');
+        } else return back()->with('flash_message_error', 'Заявка не найдена');
+
     }
 }

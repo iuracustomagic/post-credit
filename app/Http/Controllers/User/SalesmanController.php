@@ -21,9 +21,20 @@ class SalesmanController extends Controller
     {
         if(Auth::user()->role_id == 2) {
 //            $users= User::where('manager_id', Auth::id())->where('role_id', '4')->get();
-            $company = Company::where('created_by',Auth::id() )->first();
-            $userCompanies = UserCompany::where('company_id',$company->id)->get();
+            $companies = Company::where('created_by',Auth::id() )->get();
+            if(isset($companies)) {
+                $userCompanies=[];
+                foreach($companies as $company) {
+                    $userCompany = UserCompany::where('company_id',$company->id)->get();
+                    foreach ($userCompany as $item) {
+                        $userCompanies[] =$item;
+                    }
 
+                }
+
+            } else $userCompanies =null;
+
+//dd($userCompanies);
             $users = [];
             if($userCompanies) {
                 foreach($userCompanies as $item) {
@@ -41,6 +52,7 @@ class SalesmanController extends Controller
     {
         if(Auth::user()->role_id == 2) {
             $companies= Company::where('created_by', Auth::id())->get();
+            $divisions= Division::where('created_by', Auth::id())->get();
             foreach ($companies as $company){
                 $divisionList = Division::where('company_id', $company->id)->get();
                 $company['divisions'] = $divisionList;
@@ -48,17 +60,13 @@ class SalesmanController extends Controller
 
         } else {
             $companies = Company::all();
+            $divisions = Division::all();
             foreach ($companies as $company){
                 $divisionList = Division::where('company_id', $company->id)->get();
                 $company['divisions'] = $divisionList;
             }
         }
 
-
-        if(Auth::user()->role_id == 2) {
-            $divisions= Division::where('created_by', Auth::id())->get();
-
-        } else $divisions = Division::all();
 //dd($companies);
         return view('user.salesman.create', compact('companies', 'divisions'));
     }

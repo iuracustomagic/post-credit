@@ -67,7 +67,7 @@ class ManagerController extends Controller
     public function edit(User $user)
     {
         $managers = User::where('role_id', 2)->where('id', '!=', $user->id)->get();
-        $myManagers = User::where('manager_id', $user->id)->get();
+        $myManagers = User::where('manager_id', $user->id)->where('role_id', 2)->get();
         $manager = User::where('id', $user->manager_id)->first();
         $managerBonus = ManagerBonusSetting::where('manager_id', $user->id)->first();
         $creditRates = Rate::where('type', 'credit')->get();

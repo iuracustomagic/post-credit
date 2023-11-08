@@ -18,10 +18,11 @@ Route::get('/register', '\App\Http\Controllers\Auth\AuthController@register')->n
 Route::post('/login','\App\Http\Controllers\Auth\AuthController@postLogin')->name('postLogin');
 Route::post('/register','\App\Http\Controllers\Auth\AuthController@managerSave')->name('manager.new');
 
+Route::post('/webhook-order/{id}', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
 
-Route::middleware(['basicAuth'])->group(function () {
-    Route::post('/webhook-order', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
-});
+//Route::middleware(['basicAuth'])->group(function () {
+//    Route::post('/webhook-order', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
+//});
 
 Route::group(['middleware' => ['auth']],function () {
     Route::get('/logout', '\App\Http\Controllers\Auth\AuthController@logout')->name('logout');
@@ -84,5 +85,7 @@ Route::group(['middleware' => ['auth']],function () {
     Route::post('/order', '\App\Http\Controllers\Order\OrderController@store')->name('order.store');
     Route::post('/specification/{order}', '\App\Http\Controllers\Order\OrderController@downloadSpecification')->name('order.specification');
     Route::get('/check-order/{order}', '\App\Http\Controllers\Order\OrderController@checkOrders')->name('order.check');
+    Route::get('/continue-order/{order}', '\App\Http\Controllers\Order\OrderController@continueOrder')->name('order.continue');
+    Route::get('/cancel-order/{order}', '\App\Http\Controllers\Order\OrderController@cancelOrder')->name('order.cancel');
 });
 

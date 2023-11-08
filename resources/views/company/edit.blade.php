@@ -57,6 +57,7 @@
                             </div>
                         </nav>
                         <div class="col-sm-4 d-flex justify-content-end">
+                            @if($currentUser->role_id ==1)
                             <div class=" fs-4 d-flex">
                                 <span class="mr-2">Статус:</span>
                                 @if($currentUser->status == 1)
@@ -71,7 +72,7 @@
                                 <span class="text-primary">{{$company->statusTitle}}</span>
                                  @endif
                             </div>
-
+                            @endif
                         </div>
                        </div>
                         <div class="tab-content py-3 " style="min-height: 500px" id="nav-tabContent">

@@ -277,7 +277,7 @@ foreach ($refUsers as $refUser) {
     }
     public function getSalesmanManagerAttribute() {
         $userCompany = UserCompany::where('user_id', $this->id)->first();
-        $company= Company::where('id', $userCompany->id)->first();
+        $company= Company::where('id', $userCompany->company_id)->first();
         if(isset($company->created_by)) {
             $manager = User::where('id',$company->created_by )->first();
             return $manager['first_name'].' '. $manager['last_name'].' '. $manager['surname'].', тел:   '. $manager['phone'];

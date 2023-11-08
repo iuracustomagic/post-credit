@@ -71,14 +71,21 @@
                             </div>
                         </div>
                         <div class="row mb-3">
-                            <div class="form-check col-sm-4 pl-5 mr-4 ">
+                            <div class="form-check col-sm-3 pl-5 mr-4 ">
                                 <input class="form-check-input" type="checkbox" name="find_credit" {{$division->find_credit == 'on' ? 'checked': ''}} id="find_credit_2">
                                 @error('find_credit')<p class="text-danger"> {{$message}}</p>@enderror
                                 <label class="form-check-label" for="find_credit_2">
                                     Подбор кредита
                                 </label>
                             </div>
-                            <div class="form-group col-sm-4 ">
+                            <div class="form-check col-sm-2 pl-5 mr-4 ">
+                                <input class="form-check-input" type="checkbox" name="hide_find_credit" {{$division->hide_find_credit == 'on' ? 'checked': ''}} id="hide_find_credit">
+                                @error('hide_find_credit')<p class="text-danger"> {{$message}}</p>@enderror
+                                <label class="form-check-label" for="hide_find_credit">
+                                    Скрыть подбор кредита
+                                </label>
+                            </div>
+                            <div class="form-group col-sm-3 ">
                                 <input class="form-control " name="find_credit_value" placeholder="Цена" value="{{$division->find_credit_value}}" type="text">
                                 @error('find_credit_value')<p class="text-danger"> {{$message}}</p>@enderror
                             </div>

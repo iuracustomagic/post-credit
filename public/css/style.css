@@ -1,28 +1,28 @@
 html {
     -webkit-box-sizing: border-box;
             box-sizing: border-box;
-    
+
   }
-  
+
   *, *:after, *:before {
     -webkit-box-sizing: inherit;
             box-sizing: inherit;
   }
-  
+
   body {
     overflow-x: hidden;
     font-family: 'Manrope', sans-serif;
     font-style: normal;
     font-weight: 400;
-    
+
   }
-  
-  
+
+
   h1, h2, h3, h4, h5, h6, ul, p {
     margin: 0;
     padding: 0;
   }
-  
+
   img {
     max-width: 100%;
     width: 100%;
@@ -166,8 +166,8 @@ input, select {
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
-    gap: 8px; 
-    
+    gap: 8px;
+
 }
 .add-btn {
     max-width: 200px;
@@ -177,6 +177,7 @@ input, select {
     border-radius: 4px;
     background: #ffdd2d;
     cursor: pointer;
+    text-decoration: none;
 }
 .del-btn {
     max-width: 200px;
@@ -185,6 +186,7 @@ input, select {
     text-align: center;
     border-radius: 4px;
     background: #ffdd2d;
+    text-decoration: none;
 }
 .calc-range {
     padding: 0;

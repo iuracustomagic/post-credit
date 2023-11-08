@@ -25,7 +25,9 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-
+        <li class="nav-item mt-1 mr-4">
+            <p>{{$user->first_name.' '.$user->last_name}}</p>
+        </li>
         <li  class="nav-item dropdown mt-1 mr-4">
             <a href="{{route('logout')}}"> <svg xmlns="http://www.w3.org/2000/svg" height="1.2em" viewBox="0 0 512 512">
                     <!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
