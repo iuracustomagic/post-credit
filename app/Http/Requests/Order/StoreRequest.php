@@ -40,6 +40,7 @@ class StoreRequest extends FormRequest
             'plan_term' => 'nullable|integer',
             'initial_fee' => 'nullable|integer',
             'find_credit' => 'nullable',
+            'transfer_sum' => 'nullable',
 
         ];
     }

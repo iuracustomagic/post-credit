@@ -133,4 +133,17 @@ class Order extends Model
 
 
     }
+    public function getFindCreditValueAttribute()
+    {
+        if($this->find_credit =='on') {
+            $division=Division::where('id', $this->division_id)->first();
+            if($division) {
+                return $division->find_credit_value;
+            } else return '-';
+        } else return '-';
+
+
+
+
+    }
 }

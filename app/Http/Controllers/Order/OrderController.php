@@ -78,7 +78,7 @@ class OrderController extends Controller
         foreach ($items as $key=>$item) {
             $sum +=(int) $item['price'] * ($item['quantity']>0 ? $item['quantity'] : 1);
         }
-
+        $transfer_sum = $sum;
         $division = Division::where('id', $data['division_id'] )->first();
         if($division) {
             if($division['price_sms']<= 159) {
@@ -93,8 +93,24 @@ class OrderController extends Controller
             $shopId = '';
             $showcaseId = '';
         }
-//        dd($sum+$priceSms);
+
+
         $items[] = ['name'=>'СМС-информирование', 'price'=>(string)$priceSms, 'quantity'=>(string)1];
+
+        if($data['credit_type'] == 1) {
+            $promoCode = $data['rate'];
+        } else {
+            $promoCode=$division->planValue;
+            $installment = Rate::where('id', $data['plan_term'])->first();
+            $installmentValue = ($sum*$installment['value'])/100;
+            $transferValue = ($transfer_sum*$installment['transfer_value'])/100;
+            $items[0]['price']-=round($installmentValue);
+
+            $sum -= intval(round($installmentValue));
+            $transfer_sum -= intval(round($transferValue));
+        }
+
+
         if(isset($data['find_credit'])) {
             if($data['find_credit'] == 'on') {
                 $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_credit_value'], 'quantity'=>(string)1];
@@ -103,29 +119,24 @@ class OrderController extends Controller
         } elseif($division['hide_find_credit'] == 'on' && isset($division['find_credit_value'])) {
             $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_credit_value'], 'quantity'=>(string)1];
             $sum+=$division['find_credit_value'];
+            $data['find_credit'] = 'on';
         }
 
         if($data['initial_fee'] >0) {
             $items[0]['price']-=$data['initial_fee'];
-//            $items[] = ['name'=>'Первоначальный взнос', 'price'=>(string)-$data['initial_fee'], 'quantity'=>(string)1];
+            $transfer_sum-=$data['initial_fee'];
             $sum-=$data['initial_fee'];
         }
         $data['price_sms'] = $priceSms;
 
-        if($data['credit_type'] == 1) {
-            $promoCode = $data['rate'];
-        } else {
-            $promoCode=$division->planValue;
-            $installment = Rate::where('id', $data['plan_term'])->first();
-            $installmentValue = ($sum*$installment['value'])/100;
-            $items[0]['price']-=round($installmentValue);
-//            $items[] = ['name'=>'Процент рассрочки', 'price'=>(string)-$installmentValue, 'quantity'=>(string)1];
-            $sum -= $installmentValue;
-        }
+
 //        $data['credit_type'] == 1 ? $promoCode = $data['rate'] : $promoCode=$division->planValue;
+        $data['transfer_sum'] = $transfer_sum;
+        $data['sum_credit'] = $sum + $priceSms;
+
+//        dump($data);
 
         $post = [
-
         'items'=> $items,
         'sum'=> $sum + $priceSms,
         'demoFlow'=> 'sms',
@@ -226,7 +237,8 @@ class OrderController extends Controller
         }
         $product =implode(" ", $products);
         isset($order['initial_fee'])? $initialFee=$order['initial_fee']: $initialFee=0;
-        $sum = $order['sum_credit']-$order['price_sms']-$initialFee;
+//        $sum = $order['sum_credit']-$order['price_sms']-$initialFee;
+        $sum = $order['transfer_sum'];
         $templateProcessor = new TemplateProcessor('word-template/report.docx');
         $templateProcessor->setValue('date', $order['created_at']);
         $templateProcessor->setValue('first_name', $order['first_name']);

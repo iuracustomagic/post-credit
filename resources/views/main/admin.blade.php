@@ -120,8 +120,10 @@
                                 <th>Телефон</th>
                                 <th>Срок кредита</th>
                                 <th>Сумма кредита</th>
+                                <th>Сумма к перечислению</th>
                                 <th>Стоимость смс</th>
                                 <th>Первоначальный взнос</th>
+                                <th>Подбор кредита</th>
                                 <th>Тип</th>
                                 <th>Товары</th>
 
@@ -142,7 +144,7 @@
                                                     @if($order->status != 'failed')
                                                     <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
                                                     @endif
-                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
+                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите отменить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
                                                 </ul>
                                             </div>
                                         </div>
@@ -164,8 +166,10 @@
                                     <td> {{$order->phone}}</td>
                                     <td> {{$order->term_credit}}</td>
                                     <td> {{$order->sum_credit}}</td>
+                                    <td> {{$order->transfer_sum}}</td>
                                     <td> {{$order->smsValue}}</td>
                                     <td> {{$order->initial_fee}}</td>
+                                    <td> {{$order->findCreditValue}}</td>
                                     <td> {{$order->typeTitle}}</td>
                                     <td> {{$order->productName}}</td>
 
@@ -199,17 +203,21 @@
                                 <i class="la la-eye-slash mr-2"></i><a href="#">Видимость колонок</a>
                                 <ul class="ul-choose">
                                     <li data-id="0">Статус</li>
-                                    <li data-id="1">ФИО</li>
-                                    <li data-id="2">Менеджер</li>
-                                    <li data-id="3">Дата</li>
-                                    <li data-id="4">Название</li>
-                                    <li data-id="5">Дата рождения</li>
-                                    <li data-id="6">Телефон</li>
-                                    <li data-id="7">Срок кредита</li>
-                                    <li data-id="8">Сумма кредита</li>
-                                    <li data-id="9">Стоимость смс</li>
-                                    <li data-id="10">Первоначальный взнос</li>
-                                    <li data-id="11">Товары</li>
+                                    <li data-id="1">№ договора</li>
+                                    <li data-id="2">ФИО</li>
+                                    <li data-id="3">Менеджер</li>
+                                    <li data-id="4">Дата</li>
+                                    <li data-id="5">Название</li>
+                                    <li data-id="6">Дата рождения</li>
+                                    <li data-id="7">Телефон</li>
+                                    <li data-id="8">Срок кредита</li>
+                                    <li data-id="9">Сумма кредита</li>
+                                    <li data-id="10">Сумма к перечислению</li>
+                                    <li data-id="11">Стоимость смс</li>
+                                    <li data-id="12">Первоначальный взнос</li>
+                                    <li data-id="13">Подбор кредита</li>
+                                    <li data-id="14">Тип</li>
+                                    <li data-id="15">Товары</li>
                                 </ul>
                             </li>
                         </ul>
