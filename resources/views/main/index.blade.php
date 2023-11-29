@@ -94,15 +94,15 @@
                 <div class="row">
                     <div class="col-12">
                         @include('components.flash_message')
-                        <table class="table table-hover text-nowrap" id="orderTable"  data-order='[[ 3, "desc" ]]'>
+                        <table class="table table-hover text-nowrap" id="orderTable"  data-order='[[ 4, "desc" ]]'>
                             <thead>
                             <tr>
                                 <th>Статус</th>
+                                <th>№ заявки</th>
                                 <th>№ договора</th>
                                 <th>ФИО</th>
                                 <th>Дата</th>
                                 <th>Название</th>
-
                                 <th>Тип</th>
                                 <th>Спецификация</th>
 
@@ -127,8 +127,12 @@
                                             </div>
                                         </div>
                                     </td>
+
                                     <td>
                                         {{$order->order_id}}
+                                    </td>
+                                    <td>
+                                        {{isset($order->doc_number) ? $order->doc_number: '-'}}
                                     </td>
                                     <td>
                                         {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
@@ -218,7 +222,7 @@
                             "previous": "<"
                         }
                     },
-                    order: [[3, 'desc']],
+                    // order: [[4, 'desc']],
                     // dropup: true,
                     buttons: [
                         {

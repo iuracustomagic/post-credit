@@ -20,7 +20,9 @@ class Order extends Model
 
     const TYPE_CREDIT = 1;
     const TYPE_INSTALLMENT = 2;
+    const TYPE_MFO = 3;
     const TYPE_NULL = null;
+
 
     static function getStatus() {
         return [
@@ -38,7 +40,9 @@ class Order extends Model
         return [
             self::TYPE_CREDIT => 'Кредит',
             self::TYPE_INSTALLMENT => 'Рассрочка',
+            self::TYPE_MFO => 'МФО',
             self::TYPE_NULL => '',
+
 
         ];
     }

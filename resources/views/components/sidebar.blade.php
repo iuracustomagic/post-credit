@@ -88,8 +88,12 @@
                         @elseif($user->role_id == 4)
                             <a href="{{route('order.index')}}" class="nav-link {{$current_route == 'order.index' ? 'active':''}}">
                                 <i class="nav-icon far fa-plus-square"></i>
-                                <p>Отправить заявку</p>
+                                <p>Заявка в банк</p>
                             </a>
+                        <a href="{{route('order.createMfo')}}" class="nav-link {{$current_route == 'order.createMfo' ? 'active':''}}">
+                            <i class="nav-icon far fa-plus-square"></i>
+                            <p>Заявка в МФО</p>
+                        </a>
                         @endif
                 </li>
 

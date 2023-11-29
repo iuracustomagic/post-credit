@@ -107,10 +107,11 @@
                 <div class="row">
                     <div class="col-12">
                         @include('components.flash_message')
-                        <table class="table table-hover text-nowrap w-100 " id="orderTable" data-order='[[ 4, "desc" ]]'>
+                        <table class="table table-hover text-nowrap w-100 " id="orderTable" data-order='[[ 5, "desc" ]]'>
                             <thead>
                             <tr>
                                 <th>Статус</th>
+                                <th>№ заявки</th>
                                 <th>№ договора</th>
                                 <th>ФИО</th>
                                 <th>Менеджер</th>
@@ -152,6 +153,9 @@
                                     </td>
                                     <td>
                                         {{$order->order_id}}
+                                    </td>
+                                    <td>
+                                        {{isset($order->doc_number) ? $order->doc_number: '-'}}
                                     </td>
                                     <td>
                                         {{$order->last_name.' '.$order->first_name.' '.$order->surname}}
@@ -203,21 +207,22 @@
                                 <i class="la la-eye-slash mr-2"></i><a href="#">Видимость колонок</a>
                                 <ul class="ul-choose">
                                     <li data-id="0">Статус</li>
-                                    <li data-id="1">№ договора</li>
-                                    <li data-id="2">ФИО</li>
-                                    <li data-id="3">Менеджер</li>
-                                    <li data-id="4">Дата</li>
-                                    <li data-id="5">Название</li>
-                                    <li data-id="6">Дата рождения</li>
-                                    <li data-id="7">Телефон</li>
-                                    <li data-id="8">Срок кредита</li>
-                                    <li data-id="9">Сумма кредита</li>
-                                    <li data-id="10">Сумма к перечислению</li>
-                                    <li data-id="11">Стоимость смс</li>
-                                    <li data-id="12">Первоначальный взнос</li>
-                                    <li data-id="13">Подбор кредита</li>
-                                    <li data-id="14">Тип</li>
-                                    <li data-id="15">Товары</li>
+                                    <li data-id="1">№ заявки</li>
+                                    <li data-id="2">№ договора</li>
+                                    <li data-id="3">ФИО</li>
+                                    <li data-id="4">Менеджер</li>
+                                    <li data-id="5">Дата</li>
+                                    <li data-id="6">Название</li>
+                                    <li data-id="7">Дата рождения</li>
+                                    <li data-id="8">Телефон</li>
+                                    <li data-id="9">Срок кредита</li>
+                                    <li data-id="10">Сумма кредита</li>
+                                    <li data-id="11">Сумма к перечислению</li>
+                                    <li data-id="12">Стоимость смс</li>
+                                    <li data-id="13">Первоначальный взнос</li>
+                                    <li data-id="14">Подбор кредита</li>
+                                    <li data-id="15">Тип</li>
+                                    <li data-id="16">Товары</li>
                                 </ul>
                             </li>
                         </ul>
@@ -284,7 +289,7 @@
                             "previous": "<"
                         }
                     },
-                   order: [[4, 'desc']],
+                   // order: [[4, 'desc']],
                     buttons: [
                         {
                             text: 'csv',

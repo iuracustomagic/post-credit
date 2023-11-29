@@ -62,6 +62,7 @@ class DivisionController extends Controller
 
         $images = $request->file('images');
         if(isset($data['installments'])) {
+            $installmentsIds = $data['installments'];
             unset( $data['installments']);
         }
 //        dd($images);
@@ -79,8 +80,6 @@ class DivisionController extends Controller
             }
 
         }
-        if(isset($data['installments'])) {
-            $installmentsIds = $data['installments'];
 
             if(isset($installmentsIds)) {
                 foreach ($installmentsIds as $tagId) {
@@ -88,7 +87,7 @@ class DivisionController extends Controller
 
                 }
             }
-        }
+
 
 
        return redirect()->route('division.index');
@@ -137,6 +136,15 @@ class DivisionController extends Controller
             $data = $request->validated();
             if(!isset($data['find_credit'])){
                 $data['find_credit'] = null;
+            }
+            if(!isset($data['hide_find_credit'])){
+                $data['hide_find_credit'] = null;
+            }
+            if(!isset($data['find_mfo'])){
+                $data['find_mfo'] = null;
+            }
+            if(!isset($data['hide_find_mfo'])){
+                $data['hide_find_mfo'] = null;
             }
 //            dd($data);
             $images = $request->file('images');

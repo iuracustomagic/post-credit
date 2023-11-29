@@ -34,9 +34,13 @@ class UpdateRequest extends FormRequest
             'plan_id' => 'nullable|integer',
             'installments' => 'nullable|array',
             'price_sms' => 'required|integer',
+            'price_sms_mfo' => 'required|integer',
             'find_credit' => 'nullable',
             'hide_find_credit' => 'nullable',
             'find_credit_value' => 'nullable|string',
+            'find_mfo' => 'nullable',
+            'hide_find_mfo' => 'nullable',
+            'find_mfo_value' => 'nullable|string',
         ];
     }
 }

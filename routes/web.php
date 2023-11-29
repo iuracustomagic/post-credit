@@ -20,6 +20,8 @@ Route::post('/register','\App\Http\Controllers\Auth\AuthController@managerSave')
 
 Route::post('/webhook-order/{id}', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
 
+Route::post('/check-order-mfo', '\App\Http\Controllers\Order\OrderController@checkMfo')->name('order.checkMfo');
+Route::get('/check-order-mfo', '\App\Http\Controllers\Order\OrderController@getToken')->name('order.getToken');
 //Route::middleware(['basicAuth'])->group(function () {
 //    Route::post('/webhook-order', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
 //});
@@ -83,6 +85,8 @@ Route::group(['middleware' => ['auth']],function () {
 
     Route::get('/order', '\App\Http\Controllers\Order\OrderController@index')->name('order.index');
     Route::post('/order', '\App\Http\Controllers\Order\OrderController@store')->name('order.store');
+    Route::get('/order-mfo', '\App\Http\Controllers\Order\OrderController@createMfo')->name('order.createMfo');
+    Route::post('/order-mfo', '\App\Http\Controllers\Order\OrderController@storeMfo')->name('order.storeMfo');
     Route::post('/specification/{order}', '\App\Http\Controllers\Order\OrderController@downloadSpecification')->name('order.specification');
     Route::get('/check-order/{order}', '\App\Http\Controllers\Order\OrderController@checkOrders')->name('order.check');
     Route::get('/continue-order/{order}', '\App\Http\Controllers\Order\OrderController@continueOrder')->name('order.continue');

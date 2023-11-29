@@ -21,8 +21,10 @@ class WebHookController extends Controller
 
        $id = $request['id'];
        $status= $request['status'];
+       $docNumber= $request['loan_number'];
 //        dd($id);
-      $order= Order::where('order_id', $id)->update(['status'=>$status]);
+      $order= Order::where('order_id', $id)->update(['status'=>$status, 'doc_number'=>$docNumber]);
+
       if($order) {
           return response("ок", 200);
       } else return response([
