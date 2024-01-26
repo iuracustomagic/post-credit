@@ -6,43 +6,39 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Division;
 use App\Models\MfoOrder;
-use App\Models\Order;
-use App\Models\UserCompany;
 use App\Models\UserDivision;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 
-class StatisticController extends Controller
+class StatisticMfoController extends Controller
 {
-    public function main(Request $request)
+    public function index(Request $request)
     {
-
         if(Auth::user()->role_id == 1) {
             $companies = Company::all();
-            $all = Order::when($request->status != null, function ($q) use ($request) {
+            $all = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
             })->get();
-            $approved = Order::when($request->status != null, function ($q) use ($request) {
+            $approved = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
             })->where('status', 'approved')->get();
-            $rejected= Order::when($request->status != null, function ($q) use ($request) {
+            $rejected= MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
-            })->where('status', 'rejected')->get();
-            $signed= Order::when($request->status != null, function ($q) use ($request) {
+            })->where('status', 'declined')->get();
+            $signed= MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -50,7 +46,7 @@ class StatisticController extends Controller
                 return $q->where('company_id',$request->company);
             })->where('status', 'signed')->get();
 
-            $orders = Order::when($request->status != null, function ($q) use ($request) {
+            $orders = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -62,9 +58,10 @@ class StatisticController extends Controller
 //dd($orders);
 
 
-            return view('main.admin', compact('orders', 'all','companies', 'approved', 'rejected', 'signed'));
+            return view('statisticMfo.admin', compact('orders', 'all','companies', 'approved', 'rejected', 'signed'));
 
-        } else if(Auth::user()->role_id == 2) {
+        }
+        else if(Auth::user()->role_id == 2) {
             $companies = Company::where('created_by', Auth::id())->get();
 
             $approved = new Collection();
@@ -77,21 +74,21 @@ class StatisticController extends Controller
 
                 foreach ($companies as $company) {
                     if($company) {
-                        $approved=$approved->merge(Order::when($request->status != null, function ($q) use ($request) {
+                        $approved=$approved->merge(MfoOrder::when($request->status != null, function ($q) use ($request) {
                             return $q->where('status', $request->status);
                         })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                             return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
                         })->when($request->company != null, function ($q) use ($request) {
                             return $q->where('company_id',$request->company);
                         })->where('company_id', $company->id)->where('status', 'approved')->get());
-                        $rejected=$rejected->merge(Order::when($request->status != null, function ($q) use ($request) {
+                        $rejected=$rejected->merge(MfoOrder::when($request->status != null, function ($q) use ($request) {
                             return $q->where('status', $request->status);
                         })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                             return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
                         })->when($request->company != null, function ($q) use ($request) {
                             return $q->where('company_id',$request->company);
-                        })->where('company_id', $company->id)->where('status', 'rejected')->get());
-                        $signed=$signed->merge(Order::when($request->status != null, function ($q) use ($request) {
+                        })->where('company_id', $company->id)->where('status', 'declined')->get());
+                        $signed=$signed->merge(MfoOrder::when($request->status != null, function ($q) use ($request) {
                             return $q->where('status', $request->status);
                         })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                             return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -100,7 +97,7 @@ class StatisticController extends Controller
                         })->where('company_id', $company->id)->where('status', 'signed')->get());
                         $companyId = $company->id;
                     }
-                    $order = Order::when($request->status != null, function ($q) use ($request) {
+                    $order = MfoOrder::when($request->status != null, function ($q) use ($request) {
                         return $q->where('status', $request->status);
                     })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                         return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -120,35 +117,36 @@ class StatisticController extends Controller
 
 
 
-            return view('main.manager', compact('orders', 'approved','companies', 'rejected', 'signed'));
-        } else if(Auth::user()->role_id == 3) {
+            return view('statisticMfo.manager', compact('orders', 'approved','companies', 'rejected', 'signed'));
+        }
+        else if(Auth::user()->role_id == 3) {
 
             $company = Company::where('leader_id', Auth::id())->first();
             $divisions = Division::where('company_id', $company->id)->get();
 
 
-            $orders = Order::when($request->status != null, function ($q) use ($request) {
+            $orders = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->division != null, function ($q) use ($request) {
                 return $q->where('division_id',$request->division);
             })->where('company_id', $company->id)->orderBy('created_at', 'DESC')->get();
-            $approved = Order::when($request->status != null, function ($q) use ($request) {
+            $approved = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->division != null, function ($q) use ($request) {
                 return $q->where('division_id',$request->division);
             })->where('company_id', $company->id)->where('status', 'approved')->get();
-            $rejected = Order::when($request->status != null, function ($q) use ($request) {
+            $rejected = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->division != null, function ($q) use ($request) {
                 return $q->where('division_id',$request->division);
-            })->where('company_id', $company->id)->where('status', 'rejected')->get();
-            $signed= Order::when($request->status != null, function ($q) use ($request) {
+            })->where('company_id', $company->id)->where('status', 'declined')->get();
+            $signed= MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -159,10 +157,11 @@ class StatisticController extends Controller
 
 
 //    dd($orders);
-            return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
-        } else  if(Auth::user()->role_id == 4) {
+            return view('statisticMfo.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
+        }
+        else  if(Auth::user()->role_id == 4) {
 
-            $orders = Order::when($request->status != null, function ($q) use ($request) {
+            $orders = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
@@ -172,34 +171,31 @@ class StatisticController extends Controller
             $division = UserDivision::where('user_id', Auth::id())->first();
 
             $divisions = Division::where('id', $division->division_id)->get();
-            $approved = Order::when($request->status != null, function ($q) use ($request) {
+            $approved = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
             })->where('salesman_id',  Auth::id())->where('status', 'approved')->get();
-            $rejected = Order::when($request->status != null, function ($q) use ($request) {
+            $rejected = MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
-            })->where('salesman_id',  Auth::id())->where('status', 'rejected')->get();
-            $signed= Order::when($request->status != null, function ($q) use ($request) {
+            })->where('salesman_id',  Auth::id())->where('status', 'declined')->get();
+            $signed= MfoOrder::when($request->status != null, function ($q) use ($request) {
                 return $q->where('status', $request->status);
             })->when($request->date_from != null && $request->date_to != null, function ($q) use ($request) {
                 return $q->whereBetween('created_at', [$request->date_from, $request->date_to]);
             })->when($request->company != null, function ($q) use ($request) {
                 return $q->where('company_id',$request->company);
             })->where('salesman_id',  Auth::id())->where('status', 'signed')->get();
-            return view('main.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
+            return view('statisticMfo.index', compact('orders', 'divisions', 'approved', 'rejected', 'signed'));
         }
 
 
         else redirect()->route('login');
-
     }
-
-
 }

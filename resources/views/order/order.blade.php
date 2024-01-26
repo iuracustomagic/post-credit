@@ -180,16 +180,26 @@
         }]
         let sms = 0;
         const hideFineCredit = '{{$division->hide_find_credit}}';
+        let rateValue = String({{$rate_value}});
 
         if(findCredit) {
             if(findCredit.value === 'on') {
                 findCreditValue = {{isset($division->find_credit_value) ? $division->find_credit_value :0  }}
-            } else findCreditValue =0
+            } else {
+                findCreditValue = 0;
+                rateValue = String({{$rateIfOffValue}});
+
+            }
             findCredit.addEventListener('change', (element)=>{
 
                 if(element.target.checked) {
                     findCreditValue = {{isset($division->find_credit_value) ? $division->find_credit_value :0 }}
-                } else findCreditValue =0;
+                        rateValue = String({{$rate_value}});
+                } else {
+                    findCreditValue = 0;
+                    rateValue = String({{$rateIfOffValue}});
+
+                }
                 totalPrice()
                 monthlyPrice()
             })
@@ -372,15 +382,17 @@
             let tempCredit = 0;
             let interest =0;
             if(creditType.value === '1'){
-                const rateValue = String({{$rate_value}});
-                // console.log(rateValue)
+
+                // console.log('rateValue', rateValue)
                 interest = rateValue.replace(/,/g, '.')
                 tempCredit = parseInt(creditInput.value);
             } else {
                 const installmentValue = '{{$installment_value}}';
+                // console.log(installmentValue)
                 interest = installmentValue.replace(/,/g, '.')
                 tempCredit = parseInt(creditInput.value)
             }
+
             var monthlyInterest = interest / 100 / 12;
             var x = Math.pow(1 + monthlyInterest, termInput.value);
             var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);

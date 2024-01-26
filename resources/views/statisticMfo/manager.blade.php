@@ -1,12 +1,18 @@
+@php
+
+
+@endphp
+
 @extends('layouts.main')
 
 @section('content')
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper pb-4">
 
+
         <!-- Main content -->
         <section class="content">
-            <div class="container-fluid">
+            <div class="">
                 <form action="" method="GET" class="py-3">
                     <div class="row">
                         <div class="col-md-3 d-flex">
@@ -19,19 +25,23 @@
                             <select name="status" id="" class="form-select">
                                 <option value="">Выберите статус</option>
                                 <option value="new" {{request()->get('status') == 'new' ? 'selected':''}}>Новая</option>
-                                <option value="inprogress" {{request()->get('status') == 'inprogress' ? 'selected':''}}>В процессе</option>
+                                <option value="processing" {{request()->get('status') == 'processing' ? 'selected':''}}>В процессе</option>
                                 <option value="approved" {{request()->get('status')== 'approved' ? 'selected':''}}>Одобрена</option>
+                                <option value="needMoreData" {{request()->get('status')== 'needMoreData' ? 'selected':''}}>Нужны данные</option>
+                                <option value="merged" {{request()->get('status')== 'merged' ? 'selected':''}}>Одобрена но есть заем</option>
                                 <option value="signed" {{request()->get('status') == 'signed' ? 'selected':''}}>Подписана</option>
-                                <option value="canceled" {{request()->get('status')== 'canceled' ? 'selected':''}}>Отменена</option>
-                                <option value="rejected" {{request()->get('status')== 'rejected' ? 'selected':''}}>Отказ</option>
+                                <option value="closed" {{request()->get('status')== 'closed' ? 'selected':''}}>Анулирована</option>
+                                <option value="declined" {{request()->get('status')== 'declined' ? 'selected':''}}>Отказ</option>
+                                <option value="repaid" {{request()->get('status')== 'repaid' ? 'selected':''}}>Погашена</option>
+                                <option value="isOverdue" {{request()->get('status')== 'isOverdue' ? 'selected':''}}>В просрочке</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="division" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="" tabindex="-1" aria-hidden="true">
-                                <option value="">Адрес Торговой точки</option>
-                                @foreach($divisions as $division)
-                                    <option data-select2-id="{{$division->id}}" value="{{$division->id}}"
-                                    {{request()->get('division') == $division->id ? 'selected':''}}>{{$division->address}}</option>
+
+                            <select name="company" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="" tabindex="-1" aria-hidden="true">
+                                <option value="">Название Юр. лица</option>
+                                @foreach($companies as $division)
+                                    <option data-select2-id="{{$division->id}}" value="{{$division->id}}">{{$division->name}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -43,6 +53,8 @@
                     </div>
 
                 </form>
+
+
                 <!-- Small boxes (Stat box) -->
                 <div class="row">
                     <div class="col-lg-3 col-6">
@@ -104,9 +116,6 @@
                                 <th>ФИО</th>
                                 <th>Дата</th>
                                 <th>Название</th>
-                                <th>Тип</th>
-                                <th>Спецификация</th>
-
                             </tr>
                             </thead>
                             <tbody>
@@ -119,44 +128,28 @@
                                                     {{$order->statusTitle}}
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Проверить статус</a></li>
-                                                    @if($order->status != 'failed')
-                                                        <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
+                                                    <li><a class="dropdown-item" href="{{route('order.checkStatusMfo', $order->id)}}">Проверить статус</a></li>
+                                                    @if($order->status == 'needMoreData')
+                                                        <li><a class="dropdown-item" href="{{route('order.moreData', $order->id)}}">Отправить доп. данные</a></li>
                                                     @endif
-                                                    @if($order->status == 'failed' || $order->status == 'rejected')
-                                                        <li><a class="dropdown-item" href="{{route('order.copy', $order->id)}}">Отправить в МФО</a></li>
+                                                    @if($order->status == 'approved')
+                                                        <li><a class="dropdown-item" href="{{route('order.signMfo', $order->id)}}">Подписать</a></li>
                                                     @endif
-                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
                                                 </ul>
                                             </div>
                                         </div>
                                     </td>
-
                                     <td>
                                         {{$order->order_id}}
                                     </td>
                                     <td>
-                                        {{isset($order->doc_number) ? $order->doc_number: '-'}}
+                                        {{isset($order->application_id) ? $order->application_id: '-'}}
                                     </td>
                                     <td>
-                                        {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
+                                        {{$order->clientName}}
                                     </td>
                                     <td> {{$order->created_at}}</td>
-                                    <td> @if(\Illuminate\Support\Facades\Auth::user()->role_id != 3)
-                                        {{$order->companyName}}/
-                                        @endif
-                                        {{$order->divisionAddress}}</td>
-                                    <td> {{$order->typeTitle}}</td>
-
-                                    <td>
-                                        <form action="{{route('order.specification', $order->id)}}" method="post" >
-                                            @csrf
-                                        <button type="submit" class="btn btn-outline-info">
-                                            <i class="nav-icon fas fa-copy"></i>
-                                        </button>
-                                        </form>
-                                    </td>
-
+                                    <td> {{$order->companyName}}/{{$order->divisionAddress}}</td>
                                 </tr>
                             @endforeach
                             </tbody>
@@ -199,7 +192,6 @@
                     theme: 'bootstrap4'
                 })
 
-
                 $(".ul-export li").click(function() {
                     var i = $(this).index() + 1
                     var table = $('#orderTable').DataTable();
@@ -226,8 +218,8 @@
                             "previous": "<"
                         }
                     },
-                    // order: [[4, 'desc']],
                     // dropup: true,
+                    // order: [[4, 'desc']],
                     buttons: [
                         {
                             text: 'csv',
@@ -265,10 +257,24 @@
                     // columnDefs: [{
                     //     orderable: false,
                     //     targets: -1
-                    // }]
+                    // }
+                    //    ],
+
                 });
                 // table.buttons( '.export' ).remove();
+                function showDiv(text) {
+                    let div = document.createElement("div");
+                    div.innerHTML = `<div id="newAlert" class="alert alert-info" role="alert" style=" position: absolute; top:10%; right: 10%">${text}</div>`
+                    document.body.appendChild(div);
+                    $("#newAlert").delay(3000).fadeOut("slow", function() {
+                        document.body.removeChild(div);
+                    });
+                }
 
+                @if(isset($status))
+                const status = '{{$status}}';
+                showDiv('Данные отправились, статус - '+ status)
+                @endif
             </script>
 
     @endpush

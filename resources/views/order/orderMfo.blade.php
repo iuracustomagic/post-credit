@@ -1,19 +1,26 @@
 @extends('layouts.order')
-
+@php
+$sent = false;
+@endphp
 @section('content')
-    <div style="padding-top:50px">
+    <div style="padding-top:50px; padding-bottom: 80px">
         @include('components.flash_message')
-        <form action="{{route('order.storeMfo')}}" onsubmit="return login();" id="form" method="post" class="w-100" enctype="multipart/form-data">
+        <form action="{{route('order.storeMfo')}}"
+{{--              onsubmit="return login();" --}}
+              id="form" method="post" class="w-100" enctype="multipart/form-data">
             @csrf
             <input name="salesman_id" value="{{$user->id}}" type="hidden">
             <input name="status" value="new" type="hidden">
-            <input name="rate" value="{{$rate_value}}" type="hidden">
+{{--            <input name="rate" value="{{$rate_value}}" type="hidden">--}}
             <input name="items" id='items' type="hidden">
-            <input name="email" id='email' type="hidden">
+{{--            <input name="email" id='email' type="hidden">--}}
             <input name="company_id" value="{{$company->id}}" type="hidden">
             <input name="division_id" value="{{$division->id}}" type="hidden">
-            <input name="credit_type" value="3" type="hidden">
+            <input name="date_sent" value="{{old('dateSent')}}" type="hidden">
+            <input name="term_credit" value="12" type="hidden">
+            <input name="email" id='email' type="hidden">
 
+            <div class="container">
             <div style="display: flex; justify-content: space-between; padding-right: 50px; padding-left: 50px">
                 <div>
                     <a href="{{route('statistic')}}" class="btn btn-secondary" >
@@ -29,106 +36,252 @@
             <h2 class="form-title">Отправить заявку в МФО</h2>
             <div class="form-wrap">
 
-                <div class="g-form__inputs">
-                    <div class="form-row">
-                        <input name="last_name" type="text" id="last" placeholder="Фамилия" value="{{old('last_name')}}">
-                        @error('last_name')<p class="text-danger"> {{$message}}</p>@enderror
-                        <input name="first_name" type="text" id="first" placeholder="Имя" value="{{old('first_name')}}">
-                        @error('first_name')<p class="text-danger"> {{$message}}</p>@enderror
-                        <input name="surname" type="text" id="middle" placeholder="Отчество" value="{{old('surname')}}">
-                        @error('surname')<p class="text-danger"> {{$message}}</p>@enderror
+                <div class="form_block mb-4">
+                    <div class="row mb-4 align-items-center">
+                        <div class="col-lg-6">
+                            <p class="mb-2">Номер телефона</p>
+                            <input class="form-control" name="phoneSms" placeholder="79000000000" id="user_phone" type="text">
+                        </div>
+                        <div class="col-lg-2 mt-3">
+                            <button class="btn btn-primary h6" name="sendSms" type="submit" id="send_sms_btn" onclick="sendSms()">
+                                Получить СМС
+                            </button>
+                        </div>
                     </div>
-                    <div class="form-row">
-                        <input name="birthday" class="datepicker" type="text" data-inputmask-alias="dd.mm.yyyy"  data-provide="datepicker" id="bdate" placeholder="Дата Рождения">
-                        @error('birthday')<p class="text-danger"> {{$message}}</p>@enderror
-                        <input name="phone" type="tel" id="tell" placeholder="Номер телефона" data-tel-input value="{{old('phone')}}">
-                        @error('phone')<p class="text-danger"> {{$message}}</p>@enderror
+                </div>
+
+                <div id="hiddenBlock" style="">
 
 
+                <div class="form_block mb-4">
+                    <div class="form_head">
+                        <h3 class="form_title">Персональные данные</h3>
                     </div>
-                    <div class="form-row prod-row" id="rowProd">
-                        <input type="text" id="product" oninput="getProductName(this)"  placeholder="Товар" class="product-name" >
-                        <input type="number" oninput = "getProductPrice(this)"  class="product-price" placeholder="Цена" min="10" max="500000" >
-                        <input type="number" oninput = "getProductQuantity(this)" class="product-quantity" value="1" placeholder="Количество" min="1" max="50" >
-                        <a class="add-btn" id="add_btn" onclick="checkAddInputs()">Добавить товар</a>
+                    <div class="row">
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Фамилия *</p>
+                            <input class="form-control" name="last_name" id="last" type="text" placeholder="Введите фамилию" value="{{isset($copiedData['last_name'])? $copiedData['last_name']: old('last_name')}}">
+                            @error('last_name')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Имя *</p>
+                            <input class="form-control" name="first_name" id="first" type="text" placeholder="Введите имя"
+                                   value="{{isset($copiedData['first_name'])?$copiedData['first_name']:old('first_name')}}">
+                            @error('first_name')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Отчество *</p>
+                            <input class="form-control" name="surname" id="last" type="text" placeholder="Введите отчество"
+                                   value="{{isset($copiedData['surname'])? $copiedData['surname']:old('surname')}}">
+                            @error('surname')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Дата Рождения *</p>
+                            <input name="birthday" class="form-control datepicker" type="text" data-inputmask-alias="dd.mm.yyyy"
+                                   value="{{isset($copiedData['birthday'])? $copiedData['birthday']:old('birthday')}}"
+                                   data-provide="datepicker" id="bdate" placeholder="дд-мм-гггг">
+                            @error('birthday')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Номер телефона *</p>
+                            <input class="form-control" name="phone" type="tel" id="tell" placeholder="+7 (900) 000-00-00" data-tel-input
+                                   value="{{isset($copiedData['phone'])? $copiedData['phone']:old('phone')}}">
+                            @error('phone')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Код из смс *</p>
+                            <input class="form-control" name="sms_code" type="text" placeholder="Введите код из смс" value="{{old('sms_code')}}">
+                            @error('sms_code')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
                     </div>
-                    <div class=" row w-75 align-items-center " style="padding-left:10%">
+                </div>
+
+                <div class="form_block mb-4">
+                    <div class="form_head">
+                        <h3 class="form_title">Документы</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Серия и номер паспорта(без пробела) *</p>
+                            <input class="form-control" name="password_id" id="" type="text" placeholder="Введите серию и номер паспорта" value="{{old('password_id')}}">
+                            @error('password_id')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Код подразделения *</p>
+                            <input class="form-control" name="password_code" id="" type="text" placeholder="Введите код подразделения" value="{{old('password_code')}}">
+                            @error('password_code')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Дата выдачи *</p>
+                            <input name="password_date" class="form-control datepickerEl" type="text" data-inputmask-alias="dd.mm.yyyy"  data-provide="datepickerEl" id="eldate" placeholder="дд-мм-гггг">
+                            @error('password_date')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Кем выдан *</p>
+                            <input class="form-control" name="password_by" id="" type="text" placeholder="Введите кем выдан паспорт" value="{{old('password_by')}}">
+                            @error('password_by')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Гражданство *</p>
+                            <select class="custom-select form-control" name="residence" id="" >
+                                    <option value="4">Россия</option>
+                                    <option value="1">Таджикистан</option>
+                                    <option value="2">Узбекистан</option>
+                                    <option value="3">Кыргызстан</option>
+                                    <option value="5">Беларусь</option>
+                                    <option value="6">Украина</option>
+                                    <option value="7">Казахстан</option>
+                                    <option value="8">Армения</option>
+                                    <option value="9">Азербайджан</option>
+                                    <option value="10">Молдавия</option>
+                                    <option value="11">Китай</option>
+
+                            </select>
+                            @error('residence')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Тип документа *</p>
+                            <select class="custom-select form-control" name="doc_set" id="" >
+
+                                <option value="1">Загран/Нац паспорт+временная регистрация+СНИЛС/водительское+Селфи с паспортом</option>
+{{--                                <option value="2">Загран/нац+РВП+пост.Регистрация+СНИЛС/водительское+селфи</option>--}}
+{{--                                <option value="3">Загран/нац+РВП+временная регистрация+СНИЛС/водительское+селфи</option>--}}
+{{--                                <option value="4">Загран/нац+ВНЖ+пост регистрация+СНИЛС/водительское+селфи</option>--}}
+{{--                                <option value="5">Загран/нац+ВНЖ+временная регистрация+СНИЛС/водительское+селфи</option>--}}
+{{--                                <option value="6">Загран/Нац паспорт+временная регистрация+патент+селфи</option>--}}
+{{--                                <option value="7">ID карты/Нац/загран паспорт+ВНЖ+временная регистрация+СНИЛС/водительское+селфи</option>--}}
+{{--                                <option value="8">ID карты/Нац/загран паспорт+ВНЖ+постоянная регистрация+СНИЛС/водительское+селфи</option>--}}
+
+
+                            </select>
+                            @error('residence')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form_block mb-4">
+                    <div class="form_head">
+                        <h3 class="form_title">Адрес регистрации</h3>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Индекс</p>
+                            <input class="form-control" name="address_index" id="" type="text" placeholder="Введите индекс" value="{{old('address_index')}}">
+                            @error('address_index')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Регион</p>
+                            <input class="form-control" name="address_region" id="" type="text" placeholder="Введите регион" value="{{old('address_region')}}">
+                            @error('address_region')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Город</p>
+                            <input class="form-control" name="address_city" id="" type="text" placeholder="Введите город" value="{{old('address_city')}}">
+                            @error('address_city')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Улица</p>
+                            <input class="form-control" name="address_street" id="" type="text" placeholder="Введите улицу" value="{{old('address_street')}}">
+                            @error('address_street')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Дом</p>
+                            <input class="form-control" name="address_house" id="" type="number" placeholder="Номер дома" value="{{old('address_house')}}">
+                            @error('address_house')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Корпус</p>
+                            <input class="form-control" name="address_block" id="" type="number" placeholder="Номер корпуса" value="{{old('address_block')}}">
+                            @error('address_block')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Квартира</p>
+                            <input class="form-control" name="address_flat" id="" type="number" placeholder="Номер квартиры" value="{{old('address_flat')}}">
+                            @error('address_flat')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Место рождения *</p>
+                            <input class="form-control" name="birth_place" id="" type="text" placeholder="Место рождения" value="{{old('birth_place')}}">
+                            @error('birth_place')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3 mb-4">
+                            <p class="field_label">Доход *</p>
+                            <input class="form-control" name="income_amount" id="" type="number" placeholder="Введите доход" value="{{old('income_amount')}}">
+                            @error('income_amount')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="form_block mb-4">
+                    <div class="form_head">
+                        <h3 class="form_title">Товары</h3>
+                    </div>
+                    <div class="row" id="rowProd">
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <input type="text" id="product" oninput="getProductName(this)"  placeholder="Товар" class="form-control product-name" >
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <input type="number" oninput = "getProductPrice(this)"  class="form-control product-price" placeholder="Цена" min="10" max="500000" >
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-2 mb-4">
+                            <input type="number" oninput = "getProductQuantity(this)" class="form-control product-quantity" value="1" placeholder="Количество" min="1" max="50" >
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-2 mb-4">
+                            <a class="btn btn-primary" id="add_btn" onclick="checkAddInputs()">Добавить товар</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form_block mb-5">
+                    <div class="row align-items-center ps-4">
                         @if($division['find_mfo'] == 'on' && $division['hide_find_mfo'] != 'on')
 
-                            <div class="form-check col-sm-2 ">
+                            <div class="col-12 col-md-6 col-lg-3">
                                 <label class="form-check-label" for="find_credit">
                                     Подбор кредита
                                 </label>
                                 <input type="checkbox" class="form-check-input " name="find_credit" checked id="find_credit">
                             </div>
                         @endif
+                            <div class=" col-12 col-md-6 col-lg-3" id="">
+                                <label class="checkbox-wrap" for="">
+                                    <span class="checkbox-title">Срок кредита</span>
+                                    <select class=" form-control" id="rate" name="rate" >
+                                        @foreach($rates as $item)
+                                            <option value="{{$item->value}}" >{{$item->term}} месяцев</option>
+                                        @endforeach
+                                    </select>
 
+                                </label>
 
-{{--                        <div class="col-sm-3 btn-group" role="group" aria-label="Basic radio toggle button group">--}}
-{{--                            <input type="radio" class="btn-check credit-type" name="credit_type" onclick="handleTypeClick(this);" id="btnradio1" value="1" autocomplete="off" checked>--}}
-{{--                            <label class="btn btn-outline-primary" for="btnradio1">Кредит</label>--}}
+                            </div>
+                            <div class=" col-12 col-md-6 col-lg-3" id="sum_container">
+                                <label class="checkbox-wrap" for="">
+                                    <span class="checkbox-title">Сумма кредита</span>
+                                    <input name="sum_credit" class="form-control calc-input" id="credit-input" type="number" readonly >
+                                    @error('sum_credit')<p class="text-danger"> {{$message}}</p>@enderror
+                                </label>
 
-{{--                            <input type="radio" class="btn-check credit-type" name="credit_type" onclick="handleTypeClick(this);" id="btnradio2" value="2" autocomplete="off">--}}
-{{--                            <label class="btn btn-outline-primary" for="btnradio2">Рассрочка</label>--}}
+                            </div>
 
-{{--                        </div>--}}
+                            <div class=" col-12 col-md-6 col-lg-3">
+                                <label class="checkbox-wrap" for="">
+                                    <span class="checkbox-title">Ежемесячный платёж</span>
+                                    <input name="month_pay" class="form-control calc-input" id="results-input" type="text" value="">
 
-
-{{--                        <div class="col-sm-4 row align-items-center plan-term-block" >--}}
-{{--                            <div class="col-sm-6">--}}
-{{--                                <p class="">Срок рассрочки</p>--}}
-{{--                            </div>--}}
-{{--                            <div class="col-sm-6">--}}
-{{--                                <select class=" " name="plan_term" >--}}
-{{--                                    @foreach($installments as $item)--}}
-{{--                                        <option value="{{$item->id}}" selected>{{$item->term}}</option>--}}
-{{--                                    @endforeach--}}
-{{--                                </select>--}}
-{{--                            </div>--}}
-
-{{--                        </div>--}}
-
-
+                                </label>
+                            </div>
                     </div>
-
-                    <div class="form-row row w-75">
-                        <div class="calc-section col-sm-3">
-                            <label class="checkbox-wrap" for="">
-                                <span class="checkbox-title">Первоначальный взнос</span>
-                                <input name="initial_fee" class="calc-input" id="fee-input" type="number" value="0" >
-
-                            </label>
-                        </div>
-
-                        <div class="col-sm-3 calc-section">
-                            <label class="checkbox-wrap" for="">
-                                <span class="checkbox-title">Срок кредита</span>
-                                <input name="term_credit" class="calc-input" id="term-input" type="number" min="3" max="36" value="3">
-                                @error('term_credit')<p class="text-danger"> {{$message}}</p>@enderror
-                            </label>
-                            <input class="calc-range" id="term-range" type="range" min="3" max="36" value="3" step="1">
-                        </div>
-                        <div class="calc-section col-sm-3">
-                            <label class="checkbox-wrap" for="">
-                                <span class="checkbox-title">Сумма кредита</span>
-                                <input name="sum_credit" class="calc-input" id="credit-input" type="number" readonly >
-                                @error('sum_credit')<p class="text-danger"> {{$message}}</p>@enderror
-                            </label>
-                        </div>
-                        <div class="calc-section col-sm-3">
-                            <label class="checkbox-wrap" for="">
-                                <span class="checkbox-title">Ежемесячный платёж</span>
-                                <input  class="calc-input" id="results-input" type="text" value="">
-
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <button id="submit" type="submit" class="btn btn-warning">Купить в рассрочку</button>
-                    </div>
+                </div>
 
                 </div>
+                <div class="form-row">
+                    <button id="submit" name="sendData" type="submit" class="btn_submit">Отправить</button>
+                </div>
+
+
+            </div>
             </div>
         </form>
     </div>
@@ -149,14 +302,14 @@
         const productPrice = document.querySelectorAll('.product-price');
         const productQuantity = document.querySelectorAll('.product-quantity');
         const creditInput = document.getElementById('credit-input');
-        const termInput = document.querySelector('#term-input');
-        const termRange = document.querySelector('#term-range');
+        // const termInput = document.querySelector('#term-input');
+        // const termRange = document.querySelector('#term-range');
         const inputs = document.querySelectorAll('input[type="number"]');
         const email = '@gmail.com';
         let btn = document.querySelector('#submit');
         let form = document.querySelector('#form');
         let addBtn = document.querySelector('#add_btn');
-        var results = document.getElementById('results-input').readOnly = true;
+        const results = document.getElementById('results-input').readOnly = true;
 
 
         var z = 0;
@@ -181,21 +334,33 @@
                 findCreditValue = {{isset($division->find_mfo_value) ? $division->find_mfo_value :0}};
             } else findCreditValue = 0;
 
+            // addFindCredit(findCreditValue)
             findCredit.addEventListener('change', (element)=>{
 
                 if(element.target.checked) {
                     findCreditValue = {{isset($division->find_mfo_value) ? $division->find_mfo_value :0}};
-                } else findCreditValue = 0;
+                    // if(!document.getElementById('added_find_credit')) {
+                    //     addFindCredit(findCreditValue)
+                    // }
+                } else {
+                    findCreditValue = 0;
+                    // document.getElementById('added_find_credit').remove()
+                }
+
                 totalPrice()
-                monthlyPrice()
+                mouthly()
+
             })
         } else if(hideFineCredit ==='on') {
             findCreditValue= {{isset($division->find_mfo_value) ? $division->find_mfo_value :0 }};
+            // addFindCredit(findCreditValue)
             totalPrice()
-            monthlyPrice()
+            mouthly()
         }
 
-
+        document.getElementById('rate').addEventListener('change', ()=>{
+            mouthly()
+        })
         // console.log(findCreditValue)
         const productNames = document.querySelectorAll('.product-name')
         const smsValue = {{$sms_value}};
@@ -214,23 +379,43 @@
                 }
 
             $(".datepicker").datepicker().inputmask("99.99.9999", inputmask_options);
+            $(".datepickerEl").datepicker().inputmask("99.99.9999", inputmask_options);
 
 
         });
 
+let timer = 60;
+       function sendSms() {
+           const phoneValue = document.getElementById('user_phone').value
+           let phoneValueReplaced = phoneValue.replace(/[+()-]/g, '')
+           phoneValueReplaced = phoneValueReplaced.replace(/\s/g, '')
+
+           // const data = {mobilePhoneNumber: phoneValueReplaced}
+           const sendSmsBtn = document.getElementById('send_sms_btn');
+           sendSmsBtn.innerHTML = '<span id="" style="font-size: 15px" class="" >Отправить через </span> <span style="font-size: 15px" id="counter">60</span>'
+           // console.log(phoneValueReplaced)
+           sendSmsBtn.disabled = true;
+           let timerInterval = setInterval(function(){
+               timer -= 1;
+               document.getElementById("counter").innerText = timer;
+               if(timer === 0) {
+                   clearInterval(timerInterval);
+                   sendSmsBtn.disabled = false;
+                   sendSmsBtn.innerHTML = 'Получить СМС'
+               }
+           }, 1000);
 
 
-
-        // Проверить заполнение полей
-        function test () {
-            if (!(lastInput.value == '') && !(firstInput.value == '') && !(middleInput.value == '') && !(tellInput.value == '') && !(productInput.value == '')
-                && !(productPrice.value == '') && !(quantity.value == '')) {
-                btn.removeAttribute('disabled');
-            } else {
-                btn.setAttribute('disabled', 'disabled');
-            }
         }
 
+        @if(old('triesLeft') >0)
+            const last = {{old('triesLeft')}};
+            showDiv(`Код подтверждения отправлен, осталось ${last}`)
+        sendSms()
+        document.getElementById('hiddenBlock').style.display='block';
+        @elseif(old('triesLeft') ===0)
+        showDiv(`Не осталось более попыток на отправку смс`)
+        @endif
 
         function getProductName(input, j=0) {
             items[j]['name'] = input.value
@@ -243,10 +428,10 @@
             items.forEach(item => {
                 initialValue+= Number(item['price'])
             })
-            creditInput.value = initialValue + (parseInt(termInput.value) * sms);
-            if(initialFee.value >0) {
-                creditInput.value-=Number(initialFee.value)
-            }
+            creditInput.value = initialValue +  sms;
+            // if(initialFee.value >0) {
+            //     creditInput.value-=Number(initialFee.value)
+            // }
 
             itemsInput.value = JSON.stringify(items)
         }
@@ -270,9 +455,9 @@
             } else addBtn.disabled  =false
         })
 
-        function showDiv() {
+        function showDiv(text) {
             let div = document.createElement("div");
-            div.innerHTML = '<div id="newAlert" class="alert alert-info" role="alert" style=" position: absolute; top:10%; right: 10%">Введите все поля</div>'
+            div.innerHTML = `<div id="newAlert" class="alert alert-info" role="alert" style=" position: absolute; top:10%; right: 10%">${text}</div>`
             document.body.appendChild(div);
             $("#newAlert").delay(3000).fadeOut("slow", function() {
                 document.body.removeChild(div);
@@ -281,7 +466,6 @@
         // Добавление новых товаров
         function addInput() {
 
-
             items.push({
                 name: '',
                 price: 0,
@@ -289,11 +473,11 @@
             })
             const profile = document.getElementById('rowProd');
             const div = document.createElement('div');
-            div.classList = 'form-row prod-row ' + 'form-row--' + ++z;
-            div.innerHTML = `<input type="text" id="product" oninput = "getProductName(this, z)" placeholder="Товар" class="product-name">
-            <input  type="number" id='price_${z}' oninput = "getProductPrice(this, z)" class="product-price" placeholder="Цена" min="10" max="500000" >
-            <input type="number" id='quantity_${z}' oninput = "getProductQuantity(this, z)" class="product-quantity" value="1" placeholder="Количество" min="1" max="50" >
-             <a class="del-btn" onclick="delInput()">Удалить товар</a>`;
+            div.classList = 'row ' + 'form-row--' + ++z;
+            div.innerHTML = `<div class="col-12 col-md-6 col-lg-4 mb-4"><input type="text" id="product" oninput = "getProductName(this, z)" placeholder="Товар" class="form-control product-name">
+            </div><div class="col-12 col-md-6 col-lg-4 mb-4"><input  type="number" id='price_${z}' oninput = "getProductPrice(this, z)" class="form-control product-price" placeholder="Цена" min="10" max="500000" >
+            </div><div class="col-12 col-md-6 col-lg-2 mb-4"><input type="number" id='quantity_${z}' oninput = "getProductQuantity(this, z)" class="form-control product-quantity" value="1" placeholder="Количество" min="1" max="50" >
+            </div><div class="col-12 col-md-6 col-lg-2"><a class="btn btn-warning" onclick="delInput()">Удалить товар</a></div>`;
             profile.appendChild(div);
             itemsInput.value = z;
 
@@ -318,38 +502,17 @@
 
 
 
-        termRange.addEventListener('input', function () {
-            termInput.value = termRange.value;
-        })
-
-        termInput.addEventListener('input', function () {
-            termRange.value = termInput.value;
-        })
-
-        initialFee.addEventListener('input', function () {
-            creditInput.value -= this.value
-        })
-
-        function smsPrice() {
-            return  (parseInt(termInput.value) * sms);
-
-        }
-
         function totalPrice () {
 
             let sum = 0
             items.forEach(item => {
                 sum += item['quantity'] * item['price']
             })
-            creditInput.value = sum + (parseInt(termInput.value) * sms)
+            creditInput.value = sum + sms
             if(findCreditValue>0) {
                 creditInput.value= Number(creditInput.value) + Number(findCreditValue)
             }
-            // creditInput.value = sum
 
-            if(initialFee.value >0) {
-                creditInput.value-=Number(initialFee.value)
-            }
 
         }
 
@@ -360,28 +523,35 @@
             return emailInput;
         }
 
-        function monthlyPrice () {
+        function mouthly() {
+            let rate = document.getElementById('rate')
+            let rateText =rate.options[rate.selectedIndex].text
+            console.log('rate value', rate.value)
+            console.log('rate text', rateText.replace(' месяцев', ''))
+            let tempCredit = rateText.replace(' месяцев', '');
+            // const monthlyPayment = (parseInt(creditInput.value) / Number(tempCredit))*parseInt(rate.value)
 
-            let tempCredit = 0;
-            let interest =0;
-            const installmentValue = '{{$installment_value}}';
-            interest = installmentValue.replace(/,/g, '.')
-            tempCredit = parseInt(creditInput.value)
-            var monthlyInterest = interest / 100 / 12;
-            var x = Math.pow(1 + monthlyInterest, termInput.value);
-            var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);
-            monthlyPayment = monthlyPayment | 0;
+            var monthlyInterest = rate.value / 100 ;
+            var x = Math.pow(1 + monthlyInterest,  Number(tempCredit));
+            var monthlyPayment = (parseInt(creditInput.value) * x * monthlyInterest) / (x - 1);
+            console.log('monthlyPayment', monthlyPayment)
+            monthlyPayment =Math.round(monthlyPayment)
+                // let tempCredit = 0;
+            // let interest =0;
+            // const installmentValue = '70,8';
+            // interest = installmentValue.replace(/,/g, '.')
+            // tempCredit = parseInt(creditInput.value)
+            // var monthlyInterest = interest / 100 / 12;
+            // var x = Math.pow(1 + monthlyInterest, 12);
+            // var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);
+            // monthlyPayment = monthlyPayment | 0;
             let results = document.getElementById('results-input');
             results.value = monthlyPayment.toLocaleString() + ' Рублей';
         }
 
-
-
-
         totalPrice();
         emailStick();
-        monthlyPrice();
-
+        mouthly()
 
 
 
@@ -390,33 +560,24 @@
 
                 totalPrice();
                 emailStick();
-                monthlyPrice();
+                mouthly()
 
             })
         }
 
-        prodRow.addEventListener('keyup', function() {
-
-            totalPrice();
-            emailStick();
-            monthlyPrice();
-
-        })
+        // prodRow.addEventListener('keyup', function() {
+        //     totalPrice();
+        //     emailStick();
+        //     mouthly()
+        // })
 
 
-
-        document.getElementById('term-range').addEventListener('click', function() {
-            monthlyPrice();
-            totalPrice();
-
-
-        })
         function checkAddInputs() {
             let check = true;
             document.querySelectorAll('.product-name').forEach(function (element) {
                 if(element.value === '') {
                     // btn.setAttribute('disabled', 'disabled');
-                    showDiv()
+                    showDiv('Введите все поля')
                     check=false;
                     return false;
 
@@ -425,7 +586,7 @@
             document.querySelectorAll('.product-price').forEach(function (element) {
 
                 if(element.value === '') {
-                    showDiv()
+                    showDiv('Введите все поля')
                     check=false;
                     return false;
                     // alert('Введите все поля')
@@ -443,7 +604,7 @@
             document.querySelectorAll('.product-name').forEach(function (element) {
                 if(element.value === '') {
                     // btn.setAttribute('disabled', 'disabled');
-                    showDiv()
+                    showDiv('Введите все поля')
                     check=false;
                     return false;
 
@@ -452,7 +613,7 @@
             document.querySelectorAll('.product-price').forEach(function (element) {
                 // console.log('productPrice', element.value)
                 if(element.value === '' || element.value == 0) {
-                    showDiv()
+                    showDiv('Введите все поля')
                     check=false;
                     return false;
 
@@ -474,26 +635,7 @@
         }
 
 
-        // function handleTypeClick(el){
-        //
-        //     let sum = 0
-        //     items.forEach(item => {
-        //         sum += item['quantity'] * item['price']
-        //     })
-        //
-        //     if(el.value === '2') {
-        //         planTerm.style.display = "flex"
-        //         creditInput.value = sum
-        //     } else {
-        //         planTerm.style.display = "none"
-        //         creditInput.value = sum + (parseInt(termInput.value) * sms)
-        //         if(findCreditValue>0) {
-        //             creditInput.value= Number(creditInput.value) + Number(findCreditValue)
-        //         }
-        //     }
-        //
-        //     monthlyPrice();
-        // }
+
 
 
     </script>

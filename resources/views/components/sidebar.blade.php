@@ -9,7 +9,7 @@
     <!-- Brand Logo -->
     <a href="{{route('statistic')}}" class="brand-link ml-3 mb-4">
 
-        <span class="brand-text font-weight-light">Admin Panel</span>
+        <span class="brand-text font-weight-light">КупиТутВКредит</span>
     </a>
 
     <!-- Sidebar -->
@@ -24,7 +24,13 @@
                 <li class="nav-item">
                     <a href="{{route('statistic')}}" class="nav-link {{$current_route == 'statistic' ? 'active':''}}">
                         <i class="nav-icon fas fa-tachometer-alt "></i>
-                        <p>Статистика</p>
+                        <p>Статистика Банк</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{route('statistic.mfo')}}" class="nav-link {{$current_route == 'statistic.mfo' ? 'active':''}}">
+                        <i class="nav-icon fas fa-tachometer-alt "></i>
+                        <p>Статистика МФО</p>
                     </a>
                 </li>
 
@@ -96,7 +102,15 @@
                         </a>
                         @endif
                 </li>
+                @if($user->role_id == 1)
+                    <li class="nav-item">
+                        <a href="{{route('sms.list')}}" class="nav-link {{$current_route == 'sms.list' ? 'active':''}}">
+                            <i class="nav-icon far fa-envelope"></i>
+                            <p>СМС</p>
+                        </a>
+                    </li>
 
+                    @endif
 
 
             </ul>

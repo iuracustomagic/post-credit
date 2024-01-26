@@ -129,6 +129,9 @@
                                                     @if($order->status != 'failed')
                                                         <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
                                                     @endif
+                                                    @if($order->status == 'failed' || $order->status == 'rejected')
+                                                        <li><a class="dropdown-item" href="{{route('order.copy', $order->id)}}">Отправить в МФО</a></li>
+                                                    @endif
                                                     <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
                                                 </ul>
                                             </div>

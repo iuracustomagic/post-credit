@@ -354,7 +354,7 @@ class CompanyController extends Controller
 
             if($userResponse) {
                 $organisation_date = [
-                    'status' => $data['status'],
+                    'status' => isset($data['status']) ? $data['status']: 1,
                     'name' => $data['name'],
                     'inn'=> $data['inn'],
                     'ogrn'=>$data['ogrn'],

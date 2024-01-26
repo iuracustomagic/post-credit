@@ -41,6 +41,8 @@ class UpdateRequest extends FormRequest
             'find_mfo' => 'nullable',
             'hide_find_mfo' => 'nullable',
             'find_mfo_value' => 'nullable|string',
+            'rate_if_off' => 'required|integer',
+            'segment_id' => 'nullable',
         ];
     }
 }

@@ -6,9 +6,13 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{{asset('adminlte/plugins/fontawesome-free/css/all.min.css')}} ">
 
     <link rel="stylesheet" href="{{asset('css/normalize.css')}} ">
     <link rel="stylesheet" href="{{asset('css/style.css')}} ">
+    <link rel="stylesheet" href="{{asset('css/order.css')}} ">
+
 
     <title>Отправление заявки</title>
 

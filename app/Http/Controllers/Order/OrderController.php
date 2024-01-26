@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Order;
 
+use App\Classes\ReplacePhone;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Order\StoreRequest;
 use App\Models\Company;
 use App\Models\Division;
 use App\Models\DivisionInstallment;
 use App\Models\Order;
+use App\Models\PayDate;
 use App\Models\Rate;
+use App\Models\Setting;
+use App\Models\SmsNotification;
 use App\Models\User;
 use App\Models\UserCompany;
 use App\Models\UserDivision;
@@ -18,6 +22,8 @@ use Illuminate\Support\Facades\Http;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\Style\Language;
 use PhpOffice\PhpWord\TemplateProcessor;
+use App\Classes\SendSms;
+
 
 class OrderController extends Controller
 {
@@ -33,9 +39,19 @@ class OrderController extends Controller
             $division = Division::where('id',$userDivision->division_id )->first();
 
             $rate = Rate::where('id', $division->rate_id)->first();
+            $rateIfOff = Rate::where('id', $division->rate_if_off)->first();
             if(isset($rate)) {
-                $rate_value = $rate->value;
+                if($rate->value == 'default') {
+                    $rate_value = 38;
+                } else $rate_value = $rate->value;
             } else $rate_value = 1;
+
+            if(isset($rateIfOff)) {
+                if($rateIfOff->value == 'default') {
+                    $rateIfOffValue = 38;
+                } else $rateIfOffValue = $rateIfOff->value;
+//                $rateIfOffValue = $rateIfOff->value;
+            } else $rateIfOffValue = 1;
 
             $installment = Rate::where('id', $division->plan_id)->first();
           if(isset($installment)) {
@@ -51,6 +67,7 @@ class OrderController extends Controller
             }
         } else {
             $rate_value = 1;
+            $rateIfOffValue = 1;
             $installment_value = 1;
             $division = '';
             $sms_value = '';
@@ -61,7 +78,7 @@ class OrderController extends Controller
         } else  $company = '';
 
 
-        return view('order.order', compact('user','company', 'division','rate_value', 'installment_value', 'sms_value', 'installments'));
+        return view('order.order', compact('user','company', 'division','rate_value', 'rateIfOffValue',  'installment_value', 'sms_value', 'installments'));
     }
 
     public function createMfo()
@@ -88,7 +105,7 @@ class OrderController extends Controller
                 $sms_value = $division->price_sms_mfo;
             } else $sms_value =0;
 
-            $planTerms = DivisionInstallment::where('division_id',$userDivision->division_id)->get();
+//            $planTerms = DivisionInstallment::where('division_id',$userDivision->division_id)->get();
 //            $installments = [];
 //            foreach ($planTerms as $planTerm) {
 //
@@ -173,6 +190,13 @@ class OrderController extends Controller
             $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_credit_value'], 'quantity'=>(string)1];
             $sum+=$division['find_credit_value'];
             $data['find_credit'] = 'on';
+        } else {
+            $rateIfOff =  Rate::where('id', $division['rate_if_off'])->first();
+            if(isset($rateIfOff)) {
+                $promoCode = $rateIfOff['value'];
+                $data['rate'] = $rateIfOff['value'];
+            }
+
         }
 
 
@@ -186,7 +210,7 @@ class OrderController extends Controller
         'items'=> $items,
         'sum'=> $sum + $priceSms,
         'demoFlow'=> 'sms',
-        'promoCode'=> 'default.'.$promoCode,
+        'promoCode'=> ($promoCode == 'default') ? 'default' : 'default.'.$promoCode,
         'shopId'=> $shopId,
         'showcaseId'=> $showcaseId,
          "orderNumber"=> $orderNumber,
@@ -224,8 +248,49 @@ class OrderController extends Controller
 //     Order::where('id', $order->id)->update(['order_id'=>$response->json()['id']]);
 // }
 
-        if(isset($response->json()['link'])) {
-            return redirect($response->json()['link']);
+        //.', ссылка - '.$response->json()['link']
+
+
+            $link = $response->json()['link'];
+        if(isset($link)) {
+
+            $settings = Setting::where('name', 'message')->first();
+            if($settings['first_sms'] == 'on'){
+                $userPhone = $order['phone'];
+                $code = (string)rand(10000, 99999);
+
+                $naming = env('MTS_NAMING');
+                $smsText = $settings['message_accept'].', код подтверждения -'. $code. ', ссылка на оферту - https://vk.cc/cu6z0q';
+                $phone = new ReplacePhone();
+                $userPhone = $phone->replace($userPhone);
+
+                $client = new SendSms("https://omnichannel.mts.ru/http-api/v1/", env('MTS_LOGIN'), env('MTS_PASSWORD'));
+
+                $id = $client->sendSms($naming, $smsText, $userPhone);
+
+//                dump($id);
+                if ($id != "0") {
+                    $smsData = [
+                        'user'=>$order['first_name'].' '.$order['last_name'].' '.$order['surname'],
+                        'phone'=>$order['phone'],
+                        'message_text'=>$smsText,
+                        'status'=> 'pending',
+                        'message_id'=> $id,
+                        'code_success'=> $code,
+
+                    ];
+                    $smsRequest = SmsNotification::firstOrCreate($smsData);
+                    // получение статуса по id сообщения
+//                    $status = $client->getSmsInfo([$id]);
+//                    dump($status);
+                }
+
+//                dd('stop');
+            } else {
+                return redirect($response->json()['link']);
+            }
+
+            return view('order.acceptMfo', compact('link','id', 'code', 'userPhone'));
         } else {
             $order->update(['status'=>'failed']);
             return back()->with('flash_message_error', 'Данные не отправились!');
@@ -233,125 +298,36 @@ class OrderController extends Controller
 
     }
 
-    public function storeMfo(StoreRequest $request) {
-        $data = $request->validated();
-//        dump($data);
-        $order_id = rand(10000000, 99999999);
-//        $data['birthday'] = date_format($data['birthday'], "Y-m-d");
+    public function sendSmsCode(Request $request) {
+        $link = $request->input('link');
+        $userPhone = $request->input('userPhone');
+
+        if(isset($_POST['sendSms'])) {
+
+            $code = (string)rand(10000, 99999);
+            $settings = Setting::where('name', 'message')->first();
+            $naming = env('MTS_NAMING');
+            $smsText = $settings['message_accept'].', код подтверждения -'. $code. ', ссылка на оферту - https://vk.cc/cu6z0q';
+            $client = new SendSms("https://omnichannel.mts.ru/http-api/v1/", env('MTS_LOGIN'), env('MTS_PASSWORD'));
+
+            $id = $client->sendSms($naming, $smsText, $userPhone);
+
+//                dump($id);
+            if ($id != "0") {
+                return view('order.acceptMfo', compact('link', 'code', 'userPhone'));
+            } else
+            return back()->with('flash_message_error', 'Сообщение не отправлено!');
+//            dd($result);
+        } elseif(isset($_POST['sendData'])) {
 
 
-        $items = json_decode($data['items'], true);
-        $sms=0;
-        $sum=0;
-        $goods = [];
-        foreach ($items as $key=> $item) {
-            $good = [];
-            $good['Name'] = $item['name'];
-            $good['Price'] = $item['price'];
-            $good['Count'] = $item['quantity'];
-            $goods[]= $good;
-            $sum +=(int) $item['price'] * ($item['quantity']>0 ? $item['quantity'] : 1);
-        }
-
-        $transfer_sum = $sum;
-        $division = Division::where('id', $data['division_id'] )->first();
-        if($division) {
-            if($division['price_sms_mfo'] > 0 && $division['price_sms_mfo']<= 159) {
-                $sms=159;
-            } else $sms=$division['price_sms_mfo'];
-
-            $priceSms = $sms * $data['term_credit'];
-
-        } else {
-            $priceSms = 0;
+            if($request->input('code') == $request->input('sms_code')) {
+                return redirect($link);
+            } else return view('order.acceptMfo', compact('link',  'userPhone'));
 
         }
 
-            if($sms > 0) {
-                $items[] = ['name'=>'СМС-информирование', 'price'=>(string)$priceSms, 'quantity'=>(string)1];
-                $goods[] = ['Name'=>'СМС-информирование', 'Price'=>(string)$priceSms, 'Count'=>1];
-            }
 
-
-        if($data['initial_fee'] >0) {
-            $items[0]['price']-=$data['initial_fee'];
-            $goods[0]['Price']-=$data['initial_fee'];
-            $transfer_sum-=$data['initial_fee'];
-            $sum-=$data['initial_fee'];
-        }
-        if(isset($data['find_credit'])) {
-            if($data['find_credit'] == 'on') {
-                $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_mfo_value'], 'quantity'=>(string)1];
-                $goods[] = ['Name'=>'Подбор кредита', 'Price'=>(string)$division['find_mfo_value'], 'Count'=>1];
-                $sum+=$division['find_mfo_value'];
-            }
-        } elseif($division['hide_find_mfo'] == 'on' && isset($division['find_mfo_value'])) {
-            $items[] = ['name'=>'Подбор кредита', 'price'=>(string)$division['find_mfo_value'], 'quantity'=>(string)1];
-            $goods[] = ['Name'=>'Подбор кредита', 'Price'=>(string)$division['find_mfo_value'], 'Count'=>1];
-            $sum+=$division['find_mfo_value'];
-            $data['find_mfo'] = 'on';
-        }
-
-        $login = "test"; // Логин Вашей организации в системе paylate
-        $password = "test"; // Пароль Вашей организации в системе paylate
-//        $order_id = "235"; // Идентификатор заказа в вашей системе
-        $token = md5($login . md5($password) . $order_id); // Сформированный токен
-
-        $post = [
-//            'URL'=> 'https://paylate.ru',
-            'client_id'=> '1702082013',
-            'order_id'=> $order_id,
-
-            'sum'=> $sum + $priceSms,
-            'goods'=>urlencode(json_encode($goods, JSON_UNESCAPED_UNICODE)),
-//            'goods'=>json_encode($goods, JSON_UNESCAPED_UNICODE) ,
-            'token'=> $token,
-            'action'=> 'by_partner',
-            'pregen'=> 1,
-            'result_url'=> 'https://xn--b1aeckdhc1bmragcd.xn--p1ai',
-            'fio' =>$data['last_name'],
-            'fio1' =>$data['first_name'],
-            'fio2' =>$data['surname']
-        ];
-
-        $data['order_id']=$order_id;
-        $data['price_sms'] = $priceSms;
-        $data['transfer_sum'] = $transfer_sum;
-        $data['sum_credit'] = $sum + $priceSms;
-//dump($data);
-//dd(json_encode($post, JSON_UNESCAPED_UNICODE));
-
-        $order = Order::firstOrCreate($data);
-
-
-
-        return view('components.formMfo', compact('post'));
-
-//        $response = Http::post('https://paylate.ru/bypartner', $post);
-//        dd($response);
-//        if(isset($response)) {
-//            return $response ;
-//        }else {
-//            return back()->with('flash_message_error', 'Данные не отправились!');
-//        }
-
-
-
-
-// Order::where('id', $order->id)->update(['response'=>json_encode($response->json(), JSON_UNESCAPED_UNICODE)]);
-// if(isset($response->json()['id'])) {
-//     Order::where('id', $order->id)->update(['order_id'=>$response->json()['id']]);
-// }
-//if(!$response){
-//                $order->update(['status'=>'failed']);
-//            return back()->with('flash_message_error', 'Данные не отправились!');
-//}
-//        if(isset($response)) {
-//            return $response ;
-//        } else {
-//            $order->update(['status'=>'failed']);
-//            return back()->with('flash_message_error', 'Данные не отправились!');
-//        }
     }
 
 
@@ -360,11 +336,114 @@ class OrderController extends Controller
         $division = Division::where('id', $order['division_id'])->first();
         $code = base64_encode($division->show_case_id.':pyzPYF7Y5S7Liq@');
 
+        // sms sending
+        $phone = '79313023149';
+        $naming = 'MTSM_Test';
+        $smsText = 'Vasha zayavka byla odobrena';
+        function generateRandomString($length = 10) {
+            return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+        }
+        $messageId = generateRandomString(20);
+        $mtsStatus = ["events_info"=> [
+            [
+                "events_info"=> [
+            [
+            "channel"=> 4,
+            "destination"=> "79870061042",
+            "event_at"=> "2021-05-18T13:45:01.000+03:00",
+            "internal_errors"=> null,
+            "internal_id"=> "c128187b-145f-4b86-b47f-8e99cf513a59",
+            "message_id"=> "10345678-f123-4694-91d7-233df79f65445",
+            "naming"=> "viber_naming",
+            "received_at"=> "2021-05-18T13:45:00.000+03:00",
+            "status"=> 200,
+            "total_parts"=> 1
+            ],
+            [
+                "channel"=> 4,
+            "destination"=> "79870061042",
+            "event_at"=> "2021-05-18T13:45:05.000+03:00",
+            "internal_errors"=> null,
+            "internal_id"=> "c128187b-145f-4b86-b47f-8e99cf513a59",
+            "message_id"=> "10345678-f123-4694-91d7-233df79f65445",
+            "naming"=> "viber_naming",
+            "received_at"=> "2021-05-18T13:45:00.000+03:00",
+            "status"=> 300,
+            "total_parts"=> 1
+            ]
+            ],
+            "key"=> "c128187b-145f-4b86-b47f-8e99cf513a59"
+            ]
+             ]];
+//        $ar = $mtsStatus['events_info'][0]['events_info'];
+//dd(end($ar)['status']);
+        $messageData = [
+            'messages '=> [
+                [
+                    "content" =>   ["short_text"=> $smsText],
+                    'to'=> [
+                        [
+                            "msisdn" => $phone,
+                            "message_id"=>$messageId
+                        ]
+                    ]
+                ],
+                "options" => [
+                    "class" => 1,
+                    "from" => [
+                        "sms_address" => $naming,
+                    ],
+                ]
+
+            ]
+        ];
+        $smsData = [
+            'user'=>$order['first_name'].' '.$order['last_name'].' '.$order['surname'],
+            'phone'=>$order['phone'],
+            'message_text'=>$smsText,
+            'status'=> 'pending',
+            'message_id'=> $messageId,
+
+        ];
+        //      $mtsResponse =  Http::withBasicAuth(env('MTS_LOGIN'), env('MTS_PASSWORD'))->post('https://omnichannel.mts.ru/http-api/v1/messages', $messageData);
+
+
+//        $receivedSms = false;
+//      if($mtsResponse->status() == 200) {
+//          $data= [
+//              "msg_ids"=>[
+//                  $messageId
+//              ]
+//          ];
+//            while($receivedSms) {
+//                $mtsStatus =  Http::withBasicAuth(env('MTS_LOGIN'), env('MTS_PASSWORD'))
+//                    ->post('https://omnichannel.mts.ru/http-api/v1/messages/info ', $data);
+//
+//                $ar = $mtsStatus['events_info'][0]['events_info'];
+//                $status = end($ar)['status'];
+//                if($status == 300 || $status == 302){
+//                    $smsRequest->update(['status'=>'sent']);
+//                    $receivedSms =true;
+//                } else if($status == 201 || $status == 301) {
+//                    $smsRequest->update(['status'=>'failed']);
+//                    $receivedSms =true;
+//                }
+//                    else {
+//
+//                    sleep(10);
+//
+//                }
+//            }
+//      }
+        // end sms sending
+
 
         $response =  Http::withHeaders([
             'Authorization' => 'Basic ' . $code,
         ])->get('https://forma.tinkoff.ru/api/partners/v2/orders/'.$order['order_id'].'/info');
         $result = json_decode($response, true);
+
+
 //        dd($result);
         if(isset($result['status'])) {
             Order::where('id', $order['id'])->update(['status'=>$result['status']]);
@@ -473,8 +552,8 @@ class OrderController extends Controller
 
     public function checkMfo(Request $request){
         $order_id = $request["order_id"];
-        $login = "test";
-        $password = "test";
+        $login = env('MFO_LOGIN');
+        $password = env('MFO_PASSWORD');
         $token = md5($login . md5($password) . $order_id);
 //dd($token);
 // Ввывод строкой. Разделитель \n
@@ -541,9 +620,103 @@ $order = Order::where('order_id', $request["order_id"])->where('sum_credit', $re
     }
     public function getToken(Request $request) {
         $order_id = $request["order_id"];
-        $login = "test";
-        $password = "test";
+        $login = env('MFO_LOGIN');
+        $password = env('MFO_PASSWORD');
         $token = md5($login . md5($password) . $order_id);
         echo $token;
+    }
+
+    public function copyOrder(Order $order) {
+        $user = User::findOrFail(Auth::id());
+        $userDivision = UserDivision::where('user_id', $user->id)->first();
+        $userCompany = UserCompany::where('user_id', $user->id)->first();
+
+
+        if ($userDivision) {
+            $division = Division::where('id',$userDivision->division_id )->first();
+
+            $rate = Rate::where('id', $division->rate_id)->first();
+            if(isset($rate)) {
+                $rate_value = $rate->value;
+            } else $rate_value = 1;
+
+            $installment = Rate::where('id', $division->plan_id)->first();
+            if(isset($installment)) {
+                $installment_value = $installment->value;
+            } else $installment_value = 1;
+            if(isset($division->price_sms_mfo)) {
+                $sms_value = $division->price_sms_mfo;
+            } else $sms_value =0;
+
+
+        } else {
+            $rate_value = 1;
+            $installment_value = 1;
+            $division = '';
+            $sms_value = 0;
+//            $installments=[];
+        }
+        if($userCompany) {
+            $company = Company::where('id', $userCompany->company_id)->first();
+        } else  $company = '';
+
+        $copiedData=[
+            'first_name'=>$order['first_name'],
+            'last_name'=>$order['last_name'],
+            'surname'=>$order['surname'],
+            'birthday'=>$order['birthday'],
+            'phone'=>$order['phone'],
+        ];
+
+        return view('order.orderMfo', compact('copiedData','user','company', 'division','rate_value', 'installment_value', 'sms_value'));
+    }
+    public function sentSms() {
+        $threeDaysLater = date ('Y-m-d', strtotime ('+3 day'));
+
+        $payDates = PayDate::where('date', $threeDaysLater)->get();
+
+        if(isset($payDates)) {
+            foreach ($payDates as $payDate) {
+                $order = Order::where('order_id', $payDate->order_id)->first();
+
+//
+//                $smsData = [
+//                    'user' => $order->first_name . ' ' . $order->last_name . ' ' . $order->surname,
+//                    'phone' => $order->phone,
+//                    'message_text' => 'Ваш следующий платеж ' . $threeDaysLater . ' в размере ' . $payDate->monthly_payment. ' руб.',
+//                    'status' => 'pending',
+//                    'message_id' => '2445574452588',
+//
+//                ];
+//                $smsRequest = SmsNotification::firstOrCreate($smsData);
+
+                $naming = env('MTS_NAMING');
+                $smsText = 'Ваш следующий платеж ' . $threeDaysLater . ' в размере ' . $payDate->monthly_payment. ' руб.';
+                $phone = new ReplacePhone();
+                $userPhone = $phone->replace($order->phone);
+
+                $client = new SendSms("https://omnichannel.mts.ru/http-api/v1/", env('MTS_LOGIN'), env('MTS_PASSWORD'));
+
+                $id = $client->sendSms($naming, $smsText, $userPhone);
+
+//                dump($id);
+                if ($id != "0") {
+                    $smsData = [
+                        'user' => $order->first_name . ' ' . $order->last_name . ' ' . $order->surname,
+                        'phone' => $order->phone,
+                        'message_text' => 'Ваш следующий платеж ' . $threeDaysLater . ' в размере ' . $payDate->monthly_payment,
+                        'status' => 'pending',
+                        'message_id' => '2445574452588',
+
+                    ];
+                    $smsRequest = SmsNotification::firstOrCreate($smsData);
+                }
+            }
+        }
+
+
+        if($payDates) {
+            return response('ok', 200);
+        } else return response("not found", 400);
     }
 }

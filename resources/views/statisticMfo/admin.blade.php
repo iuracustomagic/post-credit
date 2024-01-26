@@ -1,14 +1,27 @@
+@php
+    $threeDaysLater = date ('Y-m-d', strtotime ('+3 day'));
+
+
+@endphp
+
 @extends('layouts.main')
 
 @section('content')
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper pb-4">
+{{--            <div class="row ">--}}
+{{--                <div class="col-sm-6">--}}
+{{--                    <h3 class="m-3">Статистика</h3>--}}
+{{--                </div><!-- /.col -->--}}
+{{--            </div>--}}
 
         <!-- Main content -->
         <section class="content">
             <div class="container-fluid">
                 <form action="" method="GET" class="py-3">
                     <div class="row">
+
+
                         <div class="col-md-3 d-flex">
                             <label for="">От</label>
                             <input type="date" name="date_from" value="{{request()->get('date_from') }}" class="form-control mx-3">
@@ -19,19 +32,23 @@
                             <select name="status" id="" class="form-select">
                                 <option value="">Выберите статус</option>
                                 <option value="new" {{request()->get('status') == 'new' ? 'selected':''}}>Новая</option>
-                                <option value="inprogress" {{request()->get('status') == 'inprogress' ? 'selected':''}}>В процессе</option>
+                                <option value="processing" {{request()->get('status') == 'processing' ? 'selected':''}}>В процессе</option>
                                 <option value="approved" {{request()->get('status')== 'approved' ? 'selected':''}}>Одобрена</option>
+                                <option value="needMoreData" {{request()->get('status')== 'needMoreData' ? 'selected':''}}>Нужны данные</option>
+                                <option value="merged" {{request()->get('status')== 'merged' ? 'selected':''}}>Одобрена но есть заем</option>
                                 <option value="signed" {{request()->get('status') == 'signed' ? 'selected':''}}>Подписана</option>
-                                <option value="canceled" {{request()->get('status')== 'canceled' ? 'selected':''}}>Отменена</option>
-                                <option value="rejected" {{request()->get('status')== 'rejected' ? 'selected':''}}>Отказ</option>
+                                <option value="closed" {{request()->get('status')== 'closed' ? 'selected':''}}>Анулирована</option>
+                                <option value="declined" {{request()->get('status')== 'declined' ? 'selected':''}}>Отказ</option>
+                                <option value="repaid" {{request()->get('status')== 'repaid' ? 'selected':''}}>Погашена</option>
+                                <option value="isOverdue" {{request()->get('status')== 'isOverdue' ? 'selected':''}}>В просрочке</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <select name="division" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="" tabindex="-1" aria-hidden="true">
-                                <option value="">Адрес Торговой точки</option>
-                                @foreach($divisions as $division)
-                                    <option data-select2-id="{{$division->id}}" value="{{$division->id}}"
-                                    {{request()->get('division') == $division->id ? 'selected':''}}>{{$division->address}}</option>
+
+                            <select name="company" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="" tabindex="-1" aria-hidden="true">
+                                <option value="">Название Юр. лица</option>
+                                @foreach($companies as $division)
+                                    <option data-select2-id="{{$division->id}}" value="{{$division->id}}">{{$division->name}}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -43,6 +60,8 @@
                     </div>
 
                 </form>
+
+
                 <!-- Small boxes (Stat box) -->
                 <div class="row">
                     <div class="col-lg-3 col-6">
@@ -50,7 +69,7 @@
                         <div class="small-box bg-info">
                             <div class="inner">
                                 <p>Всего заявок</p>
-                                <h3>{{count($orders)}}</h3>
+                                <h3>{{count($all)}}</h3>
                             </div>
 
                         </div>
@@ -95,17 +114,26 @@
                 <div class="row">
                     <div class="col-12">
                         @include('components.flash_message')
-                        <table class="table table-hover text-nowrap" id="orderTable"  data-order='[[ 4, "desc" ]]'>
+                        <table class="table table-hover text-nowrap w-100 " id="orderTable" data-order='[[ 5, "desc" ]]'>
                             <thead>
                             <tr>
                                 <th>Статус</th>
                                 <th>№ заявки</th>
                                 <th>№ договора</th>
                                 <th>ФИО</th>
+                                <th>Менеджер</th>
                                 <th>Дата</th>
                                 <th>Название</th>
-                                <th>Тип</th>
-                                <th>Спецификация</th>
+                                <th>Дата рождения</th>
+                                <th>Телефон</th>
+                                <th>Срок кредита</th>
+                                <th>Сумма кредита</th>
+                                <th>Сумма к перечислению</th>
+                                <th>Стоимость смс</th>
+                                <th>Первоначальный взнос</th>
+                                <th>Подбор кредита</th>
+                                <th>Товары</th>
+
 
                             </tr>
                             </thead>
@@ -119,43 +147,42 @@
                                                     {{$order->statusTitle}}
                                                 </button>
                                                 <ul class="dropdown-menu">
-                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Проверить статус</a></li>
-                                                    @if($order->status != 'failed')
-                                                        <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
+                                                    <li><a class="dropdown-item" href="{{route('order.checkStatusMfo', $order->id)}}">Проверить статус</a></li>
+                                                    @if($order->status == 'needMoreData')
+                                                        <li><a class="dropdown-item" href="{{route('order.moreData', $order->id)}}">Отправить доп. данные</a></li>
                                                     @endif
-                                                    @if($order->status == 'failed' || $order->status == 'rejected')
-                                                        <li><a class="dropdown-item" href="{{route('order.copy', $order->id)}}">Отправить в МФО</a></li>
+                                                    @if($order->status == 'approved')
+                                                        <li><a class="dropdown-item" href="{{route('order.signMfo', $order->id)}}">Подписать</a></li>
                                                     @endif
-                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите удалить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
                                                 </ul>
                                             </div>
                                         </div>
-                                    </td>
 
+                                    </td>
                                     <td>
                                         {{$order->order_id}}
                                     </td>
                                     <td>
-                                        {{isset($order->doc_number) ? $order->doc_number: '-'}}
+                                        {{isset($order->application_id) ? $order->application_id: '-'}}
                                     </td>
                                     <td>
-                                        {{$order->first_name.' '.$order->last_name.' '.$order->surname}}
+                                        {{$order->clientName}}
+                                    </td>
+                                    <td>
+                                        <p class="mb-1">{{$order->managerName}}/</p>
+                                        <p class="mb-1">{{$order->managerPhone}}</p>
                                     </td>
                                     <td> {{$order->created_at}}</td>
-                                    <td> @if(\Illuminate\Support\Facades\Auth::user()->role_id != 3)
-                                        {{$order->companyName}}/
-                                        @endif
-                                        {{$order->divisionAddress}}</td>
-                                    <td> {{$order->typeTitle}}</td>
-
-                                    <td>
-                                        <form action="{{route('order.specification', $order->id)}}" method="post" >
-                                            @csrf
-                                        <button type="submit" class="btn btn-outline-info">
-                                            <i class="nav-icon fas fa-copy"></i>
-                                        </button>
-                                        </form>
-                                    </td>
+                                    <td> {{$order->companyName}}/{{$order->divisionAddress}}</td>
+                                    <td> {{$order->clientBirthday}}</td>
+                                    <td> {{$order->clientPhone}}</td>
+                                    <td> {{$order->term_credit}}</td>
+                                    <td> {{$order->sum_credit}}</td>
+                                    <td> {{$order->transfer_sum}}</td>
+                                    <td> {{$order->smsValue}}</td>
+                                    <td> {{$order->initial_fee}}</td>
+                                    <td> {{$order->findCreditValue}}</td>
+                                    <td> {{$order->productName}}</td>
 
                                 </tr>
                             @endforeach
@@ -180,10 +207,37 @@
                         </ul>
 
                     </div>
+                    <div class="pull-right">
 
+                        <ul class="ul-dropdown">
+                            <li class="secondli">
+                                <i class="la la-eye-slash mr-2"></i><a href="#">Видимость колонок</a>
+                                <ul class="ul-choose">
+                                    <li data-id="0">Статус</li>
+                                    <li data-id="1">№ заявки</li>
+                                    <li data-id="2">№ договора</li>
+                                    <li data-id="3">ФИО</li>
+                                    <li data-id="4">Менеджер</li>
+                                    <li data-id="5">Дата</li>
+                                    <li data-id="6">Название</li>
+                                    <li data-id="7">Дата рождения</li>
+                                    <li data-id="8">Телефон</li>
+                                    <li data-id="9">Срок кредита</li>
+                                    <li data-id="10">Сумма кредита</li>
+                                    <li data-id="11">Сумма к перечислению</li>
+                                    <li data-id="12">Стоимость смс</li>
+                                    <li data-id="13">Первоначальный взнос</li>
+                                    <li data-id="14">Подбор кредита</li>
+                                    <li data-id="15">Товары</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    </div>
                 </div>
             </div><!-- /.container-fluid -->
-
+{{--@dump($orders)--}}
+{{--@dump($orders['total'])--}}
         </section>
         <!-- /.content -->
 @endsection
@@ -198,8 +252,8 @@
                 $('.select2bs4').select2({
                     theme: 'bootstrap4'
                 })
-
-
+{{--let orders =JSON.parse({{$orders}})--}}
+//     console.log(orders)
                 $(".ul-export li").click(function() {
                     var i = $(this).index() + 1
                     var table = $('#orderTable').DataTable();
@@ -213,8 +267,23 @@
                         table.button('.buttons-print').trigger();
                     }
                 });
+                $(".ul-choose li").click(function() {
+                    $( this ).toggleClass( "not-export-col" );
+                    const text =  $( this ).text();
+                    const id =  $( this ).data( "id" );
+                    $('#orderTable thead tr:first').each(function() {
 
-                const table = $('#orderTable').DataTable({
+                        $(this).find("th").eq(id).toggleClass( "not-export-col" );
+
+                    });
+                    $('#orderTable tbody tr').each(function() {
+
+                        $(this).find("td").eq(id).toggleClass( "not-export-col" );
+
+                    });
+
+                });
+               $('#orderTable').DataTable({
                     "language": {
                         "lengthMenu": "_MENU_  записей на странице",
                         "info": "Показано _START_ до _END_ из _TOTAL_ совпадений",
@@ -226,8 +295,7 @@
                             "previous": "<"
                         }
                     },
-                    // order: [[4, 'desc']],
-                    // dropup: true,
+                   // order: [[4, 'desc']],
                     buttons: [
                         {
                             text: 'csv',
@@ -267,79 +335,50 @@
                     //     targets: -1
                     // }]
                 });
-                // table.buttons( '.export' ).remove();
+
+
+                function showDiv(text) {
+                    let div = document.createElement("div");
+                    div.innerHTML = `<div id="newAlert" class="alert alert-info" role="alert" style=" position: absolute; top:10%; right: 10%">${text}</div>`
+                    document.body.appendChild(div);
+                    $("#newAlert").delay(3000).fadeOut("slow", function() {
+                        document.body.removeChild(div);
+                    });
+                }
+
+
+
+
+                @if(isset($status))
+                    const status = '{{$status}}';
+                showDiv('Данные отправились, статус - '+ status)
+
+
+                @endif
+
+
 
             </script>
 
     @endpush
 @section('after_styles')
             <style>
-                .own:before{
-                    content: "";
-                    width: 13px;
-                    border-bottom: 1px solid #ccc;
-                    position: absolute;
-                    top: 50%;
+                table {
+                    display: block;
+                    overflow-x: auto;
+                    white-space: nowrap;
                 }
-                .table_container {
-                    position: relative;
-                    min-height: 300px;
-                }
-                .evaluation_title {
-                    position: absolute;
-                    top: 44px;
-                    left: 0;
-                    color: #366a8d;
-                    font-style: italic;
 
-                }
                 .table td, .table th{
                     vertical-align: middle !important;
                 }
                 .table td table {
                     width: 100%;
                 }
-                .toggler{
-                    display: block;
-                    width: 20px;
-                    height: 20px;
-                    border: 1px solid #ccc;
-                    text-align: center;
-                    line-height: 18px;
-                    /*position: absolute;*/
-                    /*top: calc(50% - 10px);*/
-                    /*bottom: 0;*/
-                    left: -10px;
-                    background-color: #fff;
-                    z-index: 2;
-                    cursor: pointer;
+                .table thead {
+                    width: 100%;
                 }
-                .toggler.revealed:before{
-                    content: "";
-                    position: absolute;
-                    border-left: 1px solid #ccc;
-                    height: 50%;
-                    z-index: 1;
-                    top: calc(50% + 10px);
-                }
-                .toggler.t-lvl-0,
-                .toggler.t-lvl-0:before{
-                    border-color: #7c69ef;
-                }
-                .toggler.t-lvl-1{
-                    border-color: #00a65a;
-                    margin-left: 20px;
-                }
-                .toggler.t-lvl-1:before{
-                    border-color: #00a65a;
-                }
-                .toggler.t-lvl-2{
-                    border-color: #1b2a4e;
-                    margin-left: 40px;
-                }
-                .toggler.t-lvl-2:before{
-                    border-color: #1b2a4e;
-                }
+
                 tr.may-hide{
                     position: relative;
                 }
@@ -359,18 +398,12 @@
                     border-left: 1px solid #7c69ef;
                     left: 20px;
                 }
-                .own.o-lvl-1:before{
-                    border-color: #7c69ef;
-                    left: 20px;
-                }
+
                 table.lvl-1:before{
                     border-left: 1px solid #00a65a;
                     left: 40px;
                 }
-                .own.o-lvl-2:before{
-                    border-color: #00a65a;
-                    left: 40px;
-                }
+
                 table.lvl-2:before{
                     border-left: 1px solid #1b2a4e;
                     left: 60px;
@@ -428,28 +461,22 @@
                 .table-success > td{
                     background-color: rgba(0, 184, 148, .4) !important;
                 }
-                .table-perfect{
-                    background-color: rgba(129, 236, 236, .4) !important;
-                }
-                .filter{
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
+
 
                 /*-------------------------------*/
-
-                .pull-left ul {
+                .pull-left ul,
+                .pull-right ul {
                     list-style: none;
                     margin: 0;
                     padding-left: 0;
                 }
-                .pull-left a {
+                .pull-left a,
+                .pull-right a{
                     text-decoration: none;
                     color: #ffffff;
                 }
-                .pull-left li
-                {
+                .pull-left li,
+                .pull-right li{
                     color: #ffffff;
                     background-color: #456e9a;
                     border-color: #456e9a;
@@ -463,13 +490,13 @@
                     font-weight: 400;
                     line-height: 1.428571;
                 }
-                .pull-left li:hover
-                {
+                .pull-left li:hover,
+                .pull-right li:hover {
                     cursor: pointer;
                     color: #00bb00;
                 }
-                .pull-left li a:hover
-                {
+                .pull-left li a:hover,
+                .pull-right li a:hover {
                     color: #00bb00;
                 }
                 .pull-left ul li ul {
@@ -484,15 +511,27 @@
                     bottom: 34px;
                     display: none;
                 }
-
+                .pull-right ul li ul {
+                    visibility: hidden;
+                    opacity: 0;
+                    min-width: 10.2rem;
+                    position: absolute;
+                    z-index: 1000;
+                    transition: all 0.5s ease;
+                    margin-top: 8px;
+                    left: 0;
+                    bottom: 34px;
+                    display: none;
+                }
                 .pull-left ul li:hover>ul,
-                .pull-left ul li ul:hover  {
+                .pull-left ul li ul:hover,
+                .pull-right ul li:hover>ul {
                     visibility: visible;
                     opacity: 1;
                     display: block;
                 }
-                .pull-left ul li ul li
-                {
+                .pull-left ul li ul li,
+                .pull-right ul li ul li  {
                     clear: both;
                     width: 100%;
                     color: #ffffff;
@@ -520,6 +559,12 @@
                     font-size: 0.8rem;
                     vertical-align: middle;
                     margin-right: 5px;
+                }
+                .table tr th.not-export-col {
+                    display: none;
+                }
+                .table tr td.not-export-col {
+                    display: none;
                 }
                 .dt-buttons {
                     display: none;

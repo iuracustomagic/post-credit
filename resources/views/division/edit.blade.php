@@ -202,6 +202,19 @@
 
                                 </div>
 
+                                <div class="row">
+                                    <div class="form-group d-flex col-sm-4 mr-4">
+                                        <p>Ставка по кредиту если продавец выключил подбор кредита</p>
+                                        <select class="custom-select form-control" name="rate_if_off" id="rateIfOff" >
+
+                                            @foreach($rates as $rate)
+                                                <option {{$rate->id == $division->rate_if_off ? 'selected' : ''}} value="{{$rate->id}}">{{$rate->value}}%</option>
+                                            @endforeach
+
+                                        </select>
+                                        @error('rate_if_off')<p class="text-danger"> {{$message}}</p>@enderror
+                                    </div>
+                                </div>
                             </div>
                             <div class="tab-pane fade" id="product-rating" role="tabpanel" aria-labelledby="product-rating-tab">
                                 <div class="row mb-3">
@@ -224,10 +237,21 @@
                                         @error('find_mfo_value')<p class="text-danger"> {{$message}}</p>@enderror
                                     </div>
                                 </div>
-                                <div>
+                                <div class="row">
                                     <div class="form-group col-sm-4 mr-4">
                                         <input type="text" class="form-control" name="price_sms_mfo" placeholder="Цена смс" value="{{$division->price_sms_mfo}}">
                                         @error('price_sms_mfo')<p class="text-danger"> {{$message}}</p>@enderror
+                                    </div>
+                                    <div class="form-group d-flex col-sm-4 mr-4">
+                                        <p class="mr-4">Сегмент</p>
+                                        <select class="custom-select form-control" name="segment_id" id="" >
+
+                                            @foreach($segments as $item)
+                                                <option {{$item->id == $division->segment_id ? 'selected' : ''}} value="{{$item->id}}">{{$item->name}}</option>
+                                            @endforeach
+
+                                        </select>
+                                        @error('rate_if_off')<p class="text-danger"> {{$message}}</p>@enderror
                                     </div>
                                 </div>
                             </div>

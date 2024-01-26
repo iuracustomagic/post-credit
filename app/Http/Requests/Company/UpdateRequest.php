@@ -25,7 +25,7 @@ class UpdateRequest extends FormRequest
             'first_name' => 'required|min:3|string',
             'last_name' => 'required|min:3|string',
             'surname' => 'required|min:3|string',
-            'status' => 'required|integer',
+            'status' => 'nullable|integer',
             'login' => 'required|min:3|string',
             'email' => 'required|email|string',
             'password' => 'nullable|string',

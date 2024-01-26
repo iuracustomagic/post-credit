@@ -1,193 +1,106 @@
 @php
-    $threeDaysLater = date ('Y-m-d', strtotime ('+3 day'));
 
 
-@endphp
+    @endphp
 
 @extends('layouts.main')
 
 @section('content')
     <!-- Content Wrapper. Contains page content -->
     <div class="content-wrapper pb-4">
-{{--            <div class="row ">--}}
-{{--                <div class="col-sm-6">--}}
-{{--                    <h3 class="m-3">Статистика</h3>--}}
-{{--                </div><!-- /.col -->--}}
-{{--            </div>--}}
+    {{--            <div class="row ">--}}
+    {{--                <div class="col-sm-6">--}}
+    {{--                    <h3 class="m-3">Статистика</h3>--}}
+    {{--                </div><!-- /.col -->--}}
+    {{--            </div>--}}
 
-        <!-- Main content -->
+    <!-- Main content -->
         <section class="content">
-            <div class="container-fluid">
-                <form action="" method="GET" class="py-3">
-                    <div class="row">
+            <div class="container-fluid pt-4">
 
-
-                        <div class="col-md-3 d-flex">
-                            <label for="">От</label>
-                            <input type="date" name="date_from" value="{{request()->get('date_from') }}" class="form-control mx-3">
-                            <label for="">До</label>
-                            <input type="date" name="date_to" value="{{request()->get('date_to')}}" class="form-control ml-3">
-                        </div>
-                        <div class="col-md-3">
-                            <select name="status" id="" class="form-select">
-                                <option value="">Выберите статус</option>
-                                <option value="new" {{request()->get('status') == 'new' ? 'selected':''}}>Новая</option>
-                                <option value="inprogress" {{request()->get('status') == 'inprogress' ? 'selected':''}}>В процессе</option>
-                                <option value="approved" {{request()->get('status')== 'approved' ? 'selected':''}}>Одобрена</option>
-                                <option value="signed" {{request()->get('status') == 'signed' ? 'selected':''}}>Подписана</option>
-                                <option value="canceled" {{request()->get('status')== 'canceled' ? 'selected':''}}>Отменена</option>
-                                <option value="rejected" {{request()->get('status')== 'rejected' ? 'selected':''}}>Отказ</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-
-                            <select name="company" class="form-control select2 select2-hidden-accessible" style="width: 100%;" data-select2-id="" tabindex="-1" aria-hidden="true">
-                                <option value="">Название Юр. лица</option>
-                                @foreach($companies as $division)
-                                    <option data-select2-id="{{$division->id}}" value="{{$division->id}}">{{$division->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary mr-3">Поиск</button>
-                            <a class="btn btn-outline-dark btn-sm" href="{{url('/')}}">Очистить</a>
-                        </div>
+                <div class="row ps-4">
+                    <div class="col-2">
+                        <a class="btn btn-outline-primary" href="{{route('sms.settings')}}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear" viewBox="0 0 16 16">
+                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                            </svg>
+                        </a>
 
                     </div>
-
-                </form>
-
-
-                <!-- Small boxes (Stat box) -->
-                <div class="row">
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-info">
-                            <div class="inner">
-                                <p>Всего заявок</p>
-                                <h3>{{count($all)}}</h3>
-                            </div>
-
-                        </div>
-                    </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-success">
-                            <div class="inner">
-                                <p>Подписано</p>
-                                <h3>{{count($signed)}}</h3>
-                            </div>
-
-                        </div>
-                    </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-warning">
-                            <div class="inner">
-                                <p>Одобрено</p>
-                                <h3>{{count($approved)}}</h3>
-                            </div>
-
-                        </div>
-                    </div>
-                    <!-- ./col -->
-                    <div class="col-lg-3 col-6">
-                        <!-- small box -->
-                        <div class="small-box bg-danger">
-                            <div class="inner">
-                                <p>Отказано</p>
-                                <h3>{{count($rejected)}}</h3>
-                            </div>
-
-                        </div>
-                    </div>
-                    <!-- ./col -->
-
                 </div>
+                <!-- Small boxes (Stat box) -->
+{{--                <div class="row">--}}
+{{--                    <div class="col-lg-3 col-6">--}}
+{{--                        <!-- small box -->--}}
+{{--                        <div class="small-box bg-info">--}}
+{{--                            <div class="inner">--}}
+{{--                                <p>Всего заявок</p>--}}
+{{--                                <h3>{{count($orders)}}</h3>--}}
+{{--                            </div>--}}
+
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                    <!-- ./col -->--}}
+{{--                    <div class="col-lg-3 col-6">--}}
+{{--                        <!-- small box -->--}}
+{{--                        <div class="small-box bg-success">--}}
+{{--                            <div class="inner">--}}
+{{--                                <p>Подписано</p>--}}
+{{--                                <h3>{{count($signed)}}</h3>--}}
+{{--                            </div>--}}
+
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                    <!-- ./col -->--}}
+{{--                    <div class="col-lg-3 col-6">--}}
+{{--                        <!-- small box -->--}}
+{{--                        <div class="small-box bg-warning">--}}
+{{--                            <div class="inner">--}}
+{{--                                <p>Одобрено</p>--}}
+{{--                                <h3>{{count($approved)}}</h3>--}}
+{{--                            </div>--}}
+
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                    <!-- ./col -->--}}
+{{--                    <div class="col-lg-3 col-6">--}}
+{{--                        <!-- small box -->--}}
+{{--                        <div class="small-box bg-danger">--}}
+{{--                            <div class="inner">--}}
+{{--                                <p>Отказано</p>--}}
+{{--                                <h3>{{count($rejected)}}</h3>--}}
+{{--                            </div>--}}
+
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                    <!-- ./col -->--}}
+
+{{--                </div>--}}
                 <!-- /.row -->
-                <div class="row">
+                <div class="row pt-5">
                     <div class="col-12">
                         @include('components.flash_message')
-                        <table class="table table-hover text-nowrap w-100 " id="orderTable" data-order='[[ 5, "desc" ]]'>
+                        <table class="table table-hover text-nowrap w-100 " id="smsTable" data-order='[[ 2, "desc" ]]'>
                             <thead>
                             <tr>
                                 <th>Статус</th>
-                                <th>№ заявки</th>
-                                <th>№ договора</th>
                                 <th>ФИО</th>
-                                <th>Менеджер</th>
                                 <th>Дата</th>
-                                <th>Название</th>
-                                <th>Дата рождения</th>
                                 <th>Телефон</th>
-                                <th>Срок кредита</th>
-                                <th>Сумма кредита</th>
-                                <th>Сумма к перечислению</th>
-                                <th>Стоимость смс</th>
-                                <th>Первоначальный взнос</th>
-                                <th>Подбор кредита</th>
-                                <th>Тип</th>
-                                <th>Товары</th>
-
+                                <th>Текст смс</th>
 
                             </tr>
                             </thead>
                             <tbody>
-                            @foreach($orders as $order)
+                            @foreach($smsList as $sms)
                                 <tr >
-                                    <td>
-                                        <div class="btn-group" role="group" aria-label="Button group with nested dropdown">
-                                            <div class="btn-group" role="group">
-                                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                                    {{$order->statusTitle}}
-                                                </button>
-                                                <ul class="dropdown-menu">
-                                                    @if($order->credit_type == 3)
-                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Скопировать заявку</a></li>
-                                                    @else
-                                                    <li><a class="dropdown-item" href="{{route('order.check', $order->id)}}">Проверить статус</a></li>
-                                                        @if($order->status != 'failed')
-                                                            <li><a class="dropdown-item" href="{{route('order.continue', $order->id)}}">Продолжить заполнение</a></li>
-                                                        @endif
-                                                        @if($order->status == 'failed' || $order->status == 'rejected')
-                                                            <li><a class="dropdown-item" href="{{route('order.copy', $order->id)}}">Отправить в МФО</a></li>
-                                                        @endif
-                                                    <li><a class="dropdown-item" onclick="return confirm('Вы действительно хотите отменить?');" href="{{route('order.cancel', $order->id)}}">Отменить заявку</a></li>
-                                                    @endif
 
-
-                                                </ul>
-                                            </div>
-                                        </div>
-
-                                    </td>
-                                    <td>
-                                        {{$order->order_id}}
-                                    </td>
-                                    <td>
-                                        {{isset($order->doc_number) ? $order->doc_number: '-'}}
-                                    </td>
-                                    <td>
-                                        {{$order->last_name.' '.$order->first_name.' '.$order->surname}}
-                                    </td>
-                                    <td>
-                                        <p class="mb-1">{{$order->managerName}}/</p>
-                                        <p class="mb-1">{{$order->managerPhone}}</p>
-                                    </td>
-                                    <td> {{$order->created_at}}</td>
-                                    <td> {{$order->companyName}}/{{$order->divisionAddress}}</td>
-                                    <td> {{$order->birthday}}</td>
-                                    <td> {{$order->phone}}</td>
-                                    <td> {{$order->term_credit}}</td>
-                                    <td> {{$order->sum_credit}}</td>
-                                    <td> {{$order->transfer_sum}}</td>
-                                    <td> {{$order->smsValue}}</td>
-                                    <td> {{$order->initial_fee}}</td>
-                                    <td> {{$order->findCreditValue}}</td>
-                                    <td> {{$order->typeTitle}}</td>
-                                    <td> {{$order->productName}}</td>
+                                    <td> {{$sms->statusTitle}}</td>
+                                    <td> {{$sms->user}}</td>
+                                    <td> {{$sms->created_at}}</td>
+                                    <td> {{$sms->phone}}</td>
+                                    <td> {{$sms->message_text}}</td>
 
                                 </tr>
                             @endforeach
@@ -219,22 +132,11 @@
                                 <i class="la la-eye-slash mr-2"></i><a href="#">Видимость колонок</a>
                                 <ul class="ul-choose">
                                     <li data-id="0">Статус</li>
-                                    <li data-id="1">№ заявки</li>
-                                    <li data-id="2">№ договора</li>
-                                    <li data-id="3">ФИО</li>
-                                    <li data-id="4">Менеджер</li>
-                                    <li data-id="5">Дата</li>
-                                    <li data-id="6">Название</li>
-                                    <li data-id="7">Дата рождения</li>
-                                    <li data-id="8">Телефон</li>
-                                    <li data-id="9">Срок кредита</li>
-                                    <li data-id="10">Сумма кредита</li>
-                                    <li data-id="11">Сумма к перечислению</li>
-                                    <li data-id="12">Стоимость смс</li>
-                                    <li data-id="13">Первоначальный взнос</li>
-                                    <li data-id="14">Подбор кредита</li>
-                                    <li data-id="15">Тип</li>
-                                    <li data-id="16">Товары</li>
+                                    <li data-id="1">ФИО</li>
+                                    <li data-id="2">Дата</li>
+                                    <li data-id="3">Телефон</li>
+                                    <li data-id="4">Текст смс</li>
+
                                 </ul>
                             </li>
                         </ul>
@@ -242,11 +144,11 @@
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
-{{--@dump($orders)--}}
-{{--@dump($orders['total'])--}}
+            {{--@dump($orders)--}}
+            {{--@dump($orders['total'])--}}
         </section>
         <!-- /.content -->
-@endsection
+        @endsection
 
         @push('script')
 
@@ -258,11 +160,11 @@
                 $('.select2bs4').select2({
                     theme: 'bootstrap4'
                 })
-{{--let orders =JSON.parse({{$orders}})--}}
-//     console.log(orders)
+                {{--let orders =JSON.parse({{$orders}})--}}
+                //     console.log(orders)
                 $(".ul-export li").click(function() {
                     var i = $(this).index() + 1
-                    var table = $('#orderTable').DataTable();
+                    var table = $('#smsTable').DataTable();
                     if (i == 1) {
                         table.button('.buttons-csv').trigger();
                     } else if (i == 2) {
@@ -277,19 +179,19 @@
                     $( this ).toggleClass( "not-export-col" );
                     const text =  $( this ).text();
                     const id =  $( this ).data( "id" );
-                    $('#orderTable thead tr:first').each(function() {
+                    $('#smsTable thead tr:first').each(function() {
 
                         $(this).find("th").eq(id).toggleClass( "not-export-col" );
 
                     });
-                    $('#orderTable tbody tr').each(function() {
+                    $('#smsTable tbody tr').each(function() {
 
                         $(this).find("td").eq(id).toggleClass( "not-export-col" );
 
                     });
 
                 });
-               $('#orderTable').DataTable({
+                $('#smsTable').DataTable({
                     "language": {
                         "lengthMenu": "_MENU_  записей на странице",
                         "info": "Показано _START_ до _END_ из _TOTAL_ совпадений",
@@ -301,7 +203,7 @@
                             "previous": "<"
                         }
                     },
-                   // order: [[4, 'desc']],
+                    // order: [[4, 'desc']],
                     buttons: [
                         {
                             text: 'csv',
@@ -345,8 +247,8 @@
 
             </script>
 
-    @endpush
-@section('after_styles')
+        @endpush
+        @section('after_styles')
             <style>
                 table {
                     display: block;

@@ -19,9 +19,11 @@ Route::post('/login','\App\Http\Controllers\Auth\AuthController@postLogin')->nam
 Route::post('/register','\App\Http\Controllers\Auth\AuthController@managerSave')->name('manager.new');
 
 Route::post('/webhook-order/{id}', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
+Route::post('/webhook-sms', '\App\Http\Controllers\Webhook\SmsWebHookController@webhookHandler');
 
 Route::post('/check-order-mfo', '\App\Http\Controllers\Order\OrderController@checkMfo')->name('order.checkMfo');
 Route::get('/check-order-mfo', '\App\Http\Controllers\Order\OrderController@getToken')->name('order.getToken');
+Route::get('/send-sms', '\App\Http\Controllers\Order\OrderController@sentSms')->name('order.sentSms');
 //Route::middleware(['basicAuth'])->group(function () {
 //    Route::post('/webhook-order', '\App\Http\Controllers\Webhook\WebHookController@webhookHandler');
 //});
@@ -29,6 +31,7 @@ Route::get('/check-order-mfo', '\App\Http\Controllers\Order\OrderController@getT
 Route::group(['middleware' => ['auth']],function () {
     Route::get('/logout', '\App\Http\Controllers\Auth\AuthController@logout')->name('logout');
     Route::get('/', '\App\Http\Controllers\Statistic\StatisticController@main')->name('statistic');
+    Route::get('/statistic-mfo', '\App\Http\Controllers\Statistic\StatisticMfoController@index')->name('statistic.mfo');
     Route::get('/manager-profile', '\App\Http\Controllers\Profile\ManagerProfileController@index')->name('profile.manager');
     Route::get('/leader-profile', '\App\Http\Controllers\Profile\LeaderProfileController@index')->name('profile.leader');
     Route::group(['prefix' => 'manager'], function() {
@@ -85,11 +88,23 @@ Route::group(['middleware' => ['auth']],function () {
 
     Route::get('/order', '\App\Http\Controllers\Order\OrderController@index')->name('order.index');
     Route::post('/order', '\App\Http\Controllers\Order\OrderController@store')->name('order.store');
-    Route::get('/order-mfo', '\App\Http\Controllers\Order\OrderController@createMfo')->name('order.createMfo');
-    Route::post('/order-mfo', '\App\Http\Controllers\Order\OrderController@storeMfo')->name('order.storeMfo');
+    Route::get('/order-mfo', '\App\Http\Controllers\Order\OrderMfoController@index')->name('order.createMfo');
+    Route::post('/order-mfo', '\App\Http\Controllers\Order\OrderMfoController@store')->name('order.storeMfo');
     Route::post('/specification/{order}', '\App\Http\Controllers\Order\OrderController@downloadSpecification')->name('order.specification');
+    Route::post('/specification-mfo/{order}', '\App\Http\Controllers\Order\OrderMfoController@downloadSpecification')->name('order.specificationmfo');
     Route::get('/check-order/{order}', '\App\Http\Controllers\Order\OrderController@checkOrders')->name('order.check');
+    Route::get('/copy-order/{order}', '\App\Http\Controllers\Order\OrderController@copyOrder')->name('order.copy');
+    Route::get('/check-order-mfo/{order}', '\App\Http\Controllers\Order\OrderMfoController@checkStatus')->name('order.checkStatusMfo');
+    Route::get('/send-more-data-mfo/{order}', '\App\Http\Controllers\Order\OrderMfoController@moreData')->name('order.moreData');
+    Route::get('/sign-mfo/{order}', '\App\Http\Controllers\Order\OrderMfoController@signOrder')->name('order.signMfo');
+    Route::post('/send-more-data-mfo', '\App\Http\Controllers\Order\OrderMfoController@sendMoreData')->name('order.sendMoreData');
+    Route::post('/sign-mfo', '\App\Http\Controllers\Order\OrderMfoController@signMfoSend')->name('order.signMfoSend');
+    Route::post('/accept-sms', '\App\Http\Controllers\Order\OrderController@sendSmsCode')->name('order.sendSmsCode');
     Route::get('/continue-order/{order}', '\App\Http\Controllers\Order\OrderController@continueOrder')->name('order.continue');
     Route::get('/cancel-order/{order}', '\App\Http\Controllers\Order\OrderController@cancelOrder')->name('order.cancel');
+    Route::get('/sms-notifications', '\App\Http\Controllers\Sms\SmsController@index')->name('sms.list');
+    Route::get('/sms-settings', '\App\Http\Controllers\Sms\SmsController@settings')->name('sms.settings');
+    Route::patch('/sms-settings', '\App\Http\Controllers\Sms\SmsController@storeSettings')->name('setting.store');
+
 });
 

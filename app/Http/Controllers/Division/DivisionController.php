@@ -11,6 +11,7 @@ use App\Models\DivisionImage;
 use App\Models\DivisionInstallment;
 use App\Models\LeaderPassword;
 use App\Models\Rate;
+use App\Models\Segment;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -39,12 +40,13 @@ class DivisionController extends Controller
     }
     public function create()
     {
-        $rates = Rate::where('type', 'credit')->get();
+        $rates = Rate::where('type', 'credit')->orderBy('sort')->get();
         $plans = Rate::where('type', 'install_plan')->get();
         $installments = Rate::where('type', 'installment')->get();
         $companies = Company::all();
+        $segments = Segment::all();
 
-        return view('division.create', compact('rates', 'companies', 'plans', 'installments' ));
+        return view('division.create', compact('rates', 'companies', 'plans', 'installments', 'segments' ));
     }
     public function show(Division $division)
     {
@@ -52,6 +54,7 @@ class DivisionController extends Controller
         $plan = Rate::where('id', $division->plan_id)->first();
         $company = Company::where('id', $division->company_id)->first();
         $images = DivisionImage::where('division_id', $division->id)->get();
+        $segments = Segment::all();
 
         return view('division.show', compact('division', 'rate', 'company', 'images', 'plan'));
     }
@@ -98,9 +101,11 @@ class DivisionController extends Controller
 
     public function edit(Division $division)
     {
-        $rates = Rate::where('type', 'credit')->get();
+        $rates = Rate::where('type', 'credit')->orderBy('sort')->get();
         $plans = Rate::where('type', 'install_plan')->get();
         $installments = Rate::where('type', 'installment')->get();
+        $segments = Segment::all();
+
         $divisionInstallments = DivisionInstallment::where('division_id',$division->id )->get();
         foreach ($plans as $plan) {
             foreach ($divisionInstallments as $item) {
@@ -115,7 +120,7 @@ class DivisionController extends Controller
         } else $companies = Company::all();
         $images = DivisionImage::where('division_id', $division->id)->get();
 
-        return view('division.edit', compact('division', 'rates', 'companies', 'images', 'plans', 'installments'));
+        return view('division.edit', compact('division', 'rates', 'companies', 'images', 'plans', 'installments', 'segments'));
     }
 
     public function update(UpdateRequest $request, Division $division)

@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Models\SmsNotification;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -12,7 +13,18 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+
+        $schedule->call(function () {
+            $smsData = [
+                'user'=>'first_name'.' '.'last_name'.' '.'surname',
+                'phone'=>'7524478855',
+                'message_text'=>'Vasha zayavka byla odobrena',
+                'status'=> 'pending',
+                'message_id'=> '2445574452588',
+
+            ];
+        $smsRequest = SmsNotification::firstOrCreate($smsData);
+        })->dailyAt('11:00');
     }
 
     /**

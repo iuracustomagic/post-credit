@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Webhook;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\PayDate;
 use Illuminate\Http\Request;
 use PHPUnit\Util\Json;
 
@@ -22,8 +23,40 @@ class WebHookController extends Controller
        $id = $request['id'];
        $status= $request['status'];
        $docNumber= $request['loan_number'];
-//        dd($id);
+//        dd($status);
       $order= Order::where('order_id', $id)->update(['status'=>$status, 'doc_number'=>$docNumber]);
+   // save date of payment
+        if($status == 'signed') {
+            $orderTerm = $request['term'];
+            $date = today();
+            if($orderTerm == 12) {
+                $patDates = new PayDate();
+                $patDates->order_id = $id;
+                $patDates->monthly_payment = $request['monthly_payment'];
+
+                $date = $date->addDays(45);
+                $patDates->date = date_format($date,"Y-m-d");
+                $patDates->save();
+                for($i=1; $i<$orderTerm; $i++){
+                    $patDates = new PayDate();
+                    $patDates->order_id = $id;
+                    $patDates->monthly_payment = $request['monthly_payment'];
+                    $patDates->date = date_format($date->addMonth(),"Y-m-d");
+                    $patDates->save();
+
+                }
+            } else
+            for($i=0; $i<$orderTerm; $i++){
+                $patDates = new PayDate();
+                $patDates->order_id = $id;
+                $patDates->monthly_payment = $request['monthly_payment'];
+                $patDates->date = date_format($date->addMonth(),"Y-m-d");
+                $patDates->save();
+
+            }
+        }
+
+
 
       if($order) {
           return response("ок", 200);
