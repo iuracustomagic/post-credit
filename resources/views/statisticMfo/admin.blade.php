@@ -179,7 +179,7 @@
                                     <td> {{$order->term_credit}}</td>
                                     <td> {{$order->sum_credit}}</td>
                                     <td> {{$order->transfer_sum}}</td>
-                                    <td> {{$order->smsValue}}</td>
+                                    <td> {{$order->price_sms}}</td>
                                     <td> {{$order->initial_fee}}</td>
                                     <td> {{$order->findCreditValue}}</td>
                                     <td> {{$order->productName}}</td>

@@ -90,6 +90,7 @@ class OrderMfoController extends Controller
                 'salesman_id' => 'required|integer',
                 'birthday' => 'nullable',
                 'phone' => 'required|min:3|string',
+                'additional_phone' => 'required|min:3|string',
                 'email' => 'required|string',
                 'term_credit' => 'nullable|integer',
                 'sum_credit' => 'required',
@@ -113,16 +114,18 @@ class OrderMfoController extends Controller
                 'address_flat' => 'nullable|string',
                 'residence' => 'required|integer',
                 'doc_set' => 'required|integer',
+//                'month_pay' => 'nullable|integer',
 
                 'sms_code' => 'required|string',
                 'birth_place' => 'required|string',
                 'income_amount' => 'required|integer',
             ]);
-//        dump($data);
+//        dd($data);
             $order_id = rand(10000000, 99999999);
 
             $phone = new ReplacePhone();
             $userPhone = $phone->replace($data['phone']);
+            $additionalPhone = $phone->replace($data['additional_phone']);
             $dateFromBirthday = strtotime($data['birthday']);
             $dateFromPassword = strtotime($data['password_date']);
             $birthdayDate = date(date('Y-m-d H:i:s', $dateFromBirthday));
@@ -130,11 +133,10 @@ class OrderMfoController extends Controller
 
             $division = Division::where('id', $data['division_id'] )->first();
             if($division) {
-                if($division['price_sms_mfo'] > 0 && $division['price_sms_mfo']<= 159) {
-                    $sms=159;
-                } else $sms=$division['price_sms_mfo'];
+                if(isset($division['price_sms_mfo'])) {
+                    $priceSms=$division['price_sms_mfo'] * (int)$data['term_credit'];
+                } else  $priceSms=0;
 
-                $priceSms = $sms;
                 $segment = Segment::where('id', $division['segment_id'])->first();
 
                 if(isset($segment)) {
@@ -152,7 +154,7 @@ class OrderMfoController extends Controller
             }
 
             $items = json_decode($data['items'], true);
-            $sms=0;
+
             $sum=0;
             $goods = [];
             foreach ($items as $key=> $item) {
@@ -165,11 +167,16 @@ class OrderMfoController extends Controller
                 $goods[]= $good;
                 $sum +=(int) $item['price'] * ($item['quantity']>0 ? $item['quantity'] : 1);
             }
+            if($data['initial_fee']>0){
+                $initialFee = $data['initial_fee'];
+            } else $initialFee = 0;
 
-            $transfer_sum = $sum;
+            if($initialFee>0){
+                $transfer_sum = $sum-$initialFee;
+            } else $transfer_sum = $sum;
 
 
-            if($sms > 0) {
+            if($priceSms > 0) {
                 $items[] = ['name'=>'СМС-информирование', 'price'=>(string)$priceSms, 'quantity'=>(string)1];
                 $price = ['currency'=>'RUB', 'value'=>round($priceSms, 2)];
                 $goods[] = ['name'=>'СМС-информирование', 'price'=>$price, 'count'=>1];
@@ -213,11 +220,11 @@ class OrderMfoController extends Controller
                     'id'=>(string)$order_id,
                     'amount'=>[
                         'currency'=>'RUB',
-                        'value'=>$sum + $priceSms
+                        'value'=>$sum -$initialFee + $priceSms
                     ],
                     'initialFee'=>[
                         'currency'=>'RUB',
-                        'value'=>0.0
+                        'value'=>round($initialFee, 2)
                     ],
                     "basketItems"=> $goods,
                     "earlyRepayment"=> [
@@ -260,7 +267,7 @@ class OrderMfoController extends Controller
                             "issuerCode"=> $data['password_code']
                         ],
                         "phoneNumber"=> $userPhone,
-                        "additionalPhoneNumber"=> null,
+                        "additionalPhoneNumber"=> $additionalPhone,
                         "dateOfbirth"=> $birthdayDate,
                         "birthPlace"=> $data['birth_place'],
                         "incomeAmount"=> [
@@ -278,11 +285,14 @@ class OrderMfoController extends Controller
             $companyId = $data['company_id'];
             $divisionId = $data['division_id'];
 
+
             $term_credit = $data['term_credit'];
             $items = $data['items'];
             if(isset($data['find_mfo'])) {
                 $findMfo = $data['find_mfo'];
             }else $findMfo ='';
+            $resultSum = $sum - $initialFee +$priceSms;
+            $monthPay = round(($resultSum + $resultSum * $rate*$term_credit/100)/$term_credit, 0);
 
             $clientData = [
                 'first_name'=>$data['first_name'],
@@ -290,6 +300,7 @@ class OrderMfoController extends Controller
                 'surname'=>$data['surname'],
                 'birthday'=>$data['birthday'],
                 'phone'=>$data['phone'],
+                'additional_phone'=>$data['additional_phone'],
                 'password_id'=>$data['password_id'],
                 'password_code'=>$data['password_code'],
                 'password_date'=>$data['password_date'],
@@ -319,18 +330,20 @@ class OrderMfoController extends Controller
                 'division_id'=>$divisionId,
                 'customer_id'=>$client['id'],
 //                'customer_id'=>5,
-                'sum_credit'=>$sum + $priceSms,
+                'sum_credit'=>$sum - $initialFee + $priceSms ,
                 'transfer_sum'=>$transfer_sum,
                 'find_mfo'=>$findMfo,
                 'term_credit'=>$term_credit,
                 'items'=>$items,
                 'price_sms'=>$priceSms,
+                'initial_fee'=>$initialFee,
+                'month_pay'=>$monthPay,
             ];
 
-
+//dump($orderData);
         $order = MfoOrder::firstOrCreate($orderData);
            // dd(json_encode($post, JSON_UNESCAPED_UNICODE));
-
+//dd($post);
             $data = json_encode($post, JSON_UNESCAPED_UNICODE );
 
             $curl = curl_init();
@@ -451,7 +464,6 @@ class OrderMfoController extends Controller
 
         $status = Helper::check($order);
 
-
             if(isset($status)) {
                 return back()->with('flash_message_success', $status);
             } else return back()->with('flash_message_error', 'Статус не определен');
@@ -468,7 +480,7 @@ class OrderMfoController extends Controller
 
         $applicationId = $request->input('application_id');
         $post = [
-            'applicationId'=> $applicationId,
+            'applicationId'=> (int)$applicationId,
         ];
 //dump($request);
         $passportPhoto1 = $request->file('passport_photo1');
@@ -495,10 +507,14 @@ class OrderMfoController extends Controller
             $post['additionalFiles']['photoBack']['encodeString'] = base64_encode(base64_encode(file_get_contents($filesBack->path())));
         }
         if(isset($employmentType)) {
-            $post['employment']['employment_type'] = $employmentType;
+            $post['employment']['employmentType'] = (int)$employmentType;
             $post['employment']['employer'] = $employer;
-            $post['employment']['employment_period'] = $employmentPeriod;
+
             $post['employment']['position'] = $position;
+
+            $post['employment']['employmentPeriod'] = (int)$employmentPeriod;
+//            $dateFromEmploymentPeriod = strtotime($employmentPeriod);
+//            $birthdayDate = date(date('Y-m-d H:i:s', $dateFromEmploymentPeriod));
         }
         if(isset($photoWithPassport)) {
             $post['photoWithPassport']['extension'] = $photoWithPassport->getClientOriginalExtension();
@@ -540,11 +556,17 @@ class OrderMfoController extends Controller
 //            'Content-Type'=> 'application/x-www-form-urlencoded'
 //        ])->post('https://api-ext.paylate.ru/paylateservice/api/posCredit/v3/enrichment', json_encode($post, JSON_UNESCAPED_UNICODE));
 
-//        $result = json_decode($response, true);
-
+        $result = json_decode($response, true);
+//        dump($httpcode);
+//dd($result);
         if($httpcode==200) {
             return redirect()->route('statistic.mfo')->with('flash_message_success', 'Данные отправились');
-        } else  return back()->with('flash_message_error', 'Данные не отправились');
+        } else {
+            if(isset($result['reason'])) {
+                $reason = ', Причина - '. $result['reason'];
+            } else $reason = '';
+            return back()->with('flash_message_error', 'Данные не отправились'.$reason);
+        }
 
 
     }
@@ -552,6 +574,43 @@ class OrderMfoController extends Controller
     public function signOrder(MfoOrder $order) {
 
         $post = ['applicationId'=>$order->application_id];
+        $post1 = [
+            'applicationId'=> $order->application_id,
+            'insurances'=> [
+                ['accepted'=>false,
+                    'type'=>1,
+                ],
+                ['accepted'=>false,
+                    'type'=>2,
+                ],
+            ]
+        ];
+
+        $post2 = [
+            'applicationId'=> $order->application_id,
+            'optionalServices'=> [
+                ['accepted'=>false,
+                    'type'=>3,
+                ],
+
+            ]
+        ];
+
+        $response1 =  Http::withHeaders([
+            'Authorization'=> 'Token '.env('MFO_TOKEN'),
+            'Content-Type'=> 'application/x-www-form-urlencoded; charset=utf-8'
+        ])->post('https://api-ext.paylate.ru/paylateservice/api/posCredit/v3/refusalinsurance', json_encode($post1, JSON_UNESCAPED_UNICODE));
+
+        $response2 =  Http::withHeaders([
+            'Authorization'=> 'Token '.env('MFO_TOKEN'),
+            'Content-Type'=> 'application/x-www-form-urlencoded; charset=utf-8'
+        ])->post('https://api-ext.paylate.ru/paylateservice/api/posCredit/v3/optionalServices', json_encode($post2, JSON_UNESCAPED_UNICODE));
+//        $result1 = json_decode($response1, true);
+//        $result2 = json_decode($response2, true);
+//        dump($response1->status());
+//        dump($response2->status());
+//        dump($result1);
+//        dd($result2);
 
 
         $response =  Http::withHeaders([

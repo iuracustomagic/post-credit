@@ -96,7 +96,7 @@ class Order extends Model
 
         $division = Division::where('id', $this->division_id )->first();
         if($division) {
-            return $division['price_sms'] * $this->term_credit;
+            return $division['price_sms_mfo'] * $this->term_credit;
         } else return '-';
 
     }

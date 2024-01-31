@@ -17,7 +17,7 @@ $sent = false;
             <input name="company_id" value="{{$company->id}}" type="hidden">
             <input name="division_id" value="{{$division->id}}" type="hidden">
             <input name="date_sent" value="{{old('dateSent')}}" type="hidden">
-            <input name="term_credit" value="12" type="hidden">
+            <input name="term_credit" id="term_credit" value="12" type="hidden">
             <input name="email" id='email' type="hidden">
 
             <div class="container">
@@ -50,7 +50,8 @@ $sent = false;
                     </div>
                 </div>
 
-                <div id="hiddenBlock" style="">
+                <div id="hiddenBlock" style="display: none">
+{{--                <div id="hiddenBlock" style="">--}}
 
 
                 <div class="form_block mb-4">
@@ -77,7 +78,7 @@ $sent = false;
                         </div>
                         <div class="col-12 col-md-6 col-lg-4 mb-4">
                             <p class="field_label">Дата Рождения *</p>
-                            <input name="birthday" class="form-control datepicker" type="text" data-inputmask-alias="dd.mm.yyyy"
+                            <input name="birthday" class="form-control datepicker" id="birthday" type="text" data-inputmask-alias="dd.mm.yyyy"
                                    value="{{isset($copiedData['birthday'])? $copiedData['birthday']:old('birthday')}}"
                                    data-provide="datepicker" id="bdate" placeholder="дд-мм-гггг">
                             @error('birthday')<p class="text-danger"> {{$message}}</p>@enderror
@@ -93,6 +94,15 @@ $sent = false;
                             <input class="form-control" name="sms_code" type="text" placeholder="Введите код из смс" value="{{old('sms_code')}}">
                             @error('sms_code')<p class="text-danger"> {{$message}}</p>@enderror
                         </div>
+
+                        <div class="col-12 col-md-6 col-lg-4 mb-4">
+                            <p class="field_label">Дополнительный номер телефона *</p>
+                            <input class="form-control" name="additional_phone" type="tel" id="additional_tell" placeholder="+7 (900) 000-00-00" data-tel-input
+                                   value="{{old('additional_phone')}}">
+                            @error('additional_phone')<p class="text-danger"> {{$message}}</p>@enderror
+                        </div>
+
+
                     </div>
                 </div>
 
@@ -244,6 +254,16 @@ $sent = false;
                                 <input type="checkbox" class="form-check-input " name="find_credit" checked id="find_credit">
                             </div>
                         @endif
+
+                            <div class=" col-12 col-md-6 col-lg-3" id="sum_container">
+                                <label class="checkbox-wrap" for="">
+                                    <span class="checkbox-title">Первоначальныц взнос</span>
+                                    <input name="initial_fee" class="form-control calc-input" id="fee-input" type="number" value="0"  >
+                                    @error('initial_fee')<p class="text-danger"> {{$message}}</p>@enderror
+                                </label>
+
+                            </div>
+
                             <div class=" col-12 col-md-6 col-lg-3" id="">
                                 <label class="checkbox-wrap" for="">
                                     <span class="checkbox-title">Срок кредита</span>
@@ -268,8 +288,8 @@ $sent = false;
                             <div class=" col-12 col-md-6 col-lg-3">
                                 <label class="checkbox-wrap" for="">
                                     <span class="checkbox-title">Ежемесячный платёж</span>
-                                    <input name="month_pay" class="form-control calc-input" id="results-input" type="text" value="">
-
+                                    <input name="month_pay" class="form-control calc-input" id="results-input" type="text" readonly>
+                                    @error('month_pay')<p class="text-danger"> {{$message}}</p>@enderror
                                 </label>
                             </div>
                     </div>
@@ -311,7 +331,6 @@ $sent = false;
         let addBtn = document.querySelector('#add_btn');
         const results = document.getElementById('results-input').readOnly = true;
 
-
         var z = 0;
         const itemsInput = document.getElementById('items')
         const emailSent = document.getElementById('email')
@@ -320,6 +339,7 @@ $sent = false;
         const creditType = document.querySelector('.credit-type');
         const planTerm = document.querySelector('.plan-term-block');
         const findCredit = document.getElementById('find_credit');
+        const birthday = document.getElementById('birthday');
         let findCreditValue = 0;
         let items = [{
             name: '',
@@ -328,6 +348,10 @@ $sent = false;
         }]
         let sms = 0;
         const hideFineCredit = '{{$division->hide_find_mfo}}';
+
+        let rate = document.getElementById('rate')
+        let rateText =rate.options[rate.selectedIndex].text
+        let tempCredit = rateText.replace(' месяцев', '');
 
         if(findCredit) {
             if(findCredit.value === 'on') {
@@ -358,16 +382,27 @@ $sent = false;
             mouthly()
         }
 
-        document.getElementById('rate').addEventListener('change', ()=>{
+        initialFee.addEventListener('input', function () {
+            creditInput.value -= this.value
+        })
+
+
+        birthday.addEventListener('change', (e)=> {
+            console.log(e)
+        })
+        document.getElementById('rate').addEventListener('change', (e)=>{
+            totalPrice()
             mouthly()
+            // console.log(e.target.options[rate.selectedIndex].text.replace(' месяцев', ''))
+            document.getElementById('term_credit').value = e.target.options[rate.selectedIndex].text.replace(' месяцев', '')
         })
         // console.log(findCreditValue)
         const productNames = document.querySelectorAll('.product-name')
         const smsValue = {{$sms_value}};
 
-        if(smsValue > 0 && smsValue<=159) {
-            sms = 159
-        } else sms = smsValue;
+        if(smsValue > 0) {
+            sms =  smsValue*tempCredit;
+        } else sms =0;
 
         $(document).ready(function () {
 
@@ -377,9 +412,61 @@ $sent = false;
                     alias: "date",
                     insertMode: false
                 }
+            function convertmili( mSeconds )
+            {
+                return mSeconds / 31536000000;
+            }
 
-            $(".datepicker").datepicker().inputmask("99.99.9999", inputmask_options);
+            $('.datepicker').change(function(e){
+                // const dateAsObject = $(this).datepicker( 'getDate').getFullYear();
+                const dateAsObject = $(this).datepicker( 'getDate');
+                // console.log('choosen', dateAsObject)
+                // const today = new Date().getFullYear();
+                const today = new Date();
+                // const diff = Math.abs(today - dateAsObject);
+                // console.log('choosen', diff)
+                // const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 30 * 12))
+              // const birth_date = dateAsObject.setFullYear(dateAsObject.getFullYear() + 18);
+                const years = 60 * 60 * 24 * 30 * 12 * 18;
+                // console.log('today', today)
+                const diff = convertmili(today - dateAsObject)
+                // console.log('diff', today - dateAsObject)
+                // console.log('today - choosen', (today - dateAsObject).getFullYear())
+
+
+            });
+
+            //1706652000000
+            //1706715375338
+            //63375338
+            //559872000
+            //65321442
+            //565633905872 -18 years
+            $(".datepicker").datepicker({
+                onSelect: function(dateText, inst) {
+                    if(dateText !== inst.lastVal){
+                        $(this).change();
+                    }
+
+                    const dateAsString = dateText;
+                    const dateAsObject = $(this).datepicker( 'getDate' ).getFullYear();
+                    const today = new Date().getFullYear();
+
+                    // console.log(dateAsObject)
+                    // console.log(today)
+                    const diff = Math.abs(dateAsObject - today);
+                    // console.log(diff)
+                   const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 30 * 12))
+                    // console.log(years)
+
+                }
+            }).inputmask("99.99.9999", inputmask_options);
             $(".datepickerEl").datepicker().inputmask("99.99.9999", inputmask_options);
+
+            // $(".datepicker").on('input', (e)=>{
+            //     console.log(e)
+            // })
+
 
 
         });
@@ -441,10 +528,11 @@ let timer = 60;
             items.forEach(item => {
                 sum += item['quantity'] * item['price']
             })
-            creditInput.value = sum + (parseInt(termInput.value) * sms)
             if(initialFee.value >0) {
-                creditInput.value-=Number(initialFee.value)
+                sum-=Number(initialFee.value)
             }
+            creditInput.value = sum + sms
+
 
             itemsInput.value = JSON.stringify(items)
         }
@@ -508,10 +596,26 @@ let timer = 60;
             items.forEach(item => {
                 sum += item['quantity'] * item['price']
             })
-            creditInput.value = sum + sms
-            if(findCreditValue>0) {
-                creditInput.value= Number(creditInput.value) + Number(findCreditValue)
+            if(initialFee.value >0) {
+                sum-=Number(initialFee.value)
             }
+            let rate = document.getElementById('rate')
+            let rateText =rate.options[rate.selectedIndex].text
+            let tempCredit = rateText.replace(' месяцев', '');
+
+            if(smsValue > 0) {
+                sms =  smsValue*tempCredit;
+            } else sms =0;
+
+            if(findCreditValue>0) {
+                sum+= + Number(findCreditValue)
+            }
+            // console.log('sms in totalPrice', sms)
+            // console.log('findCreditValue in totalPrice', findCreditValue)
+            creditInput.value = sum + sms
+
+
+
 
 
         }
@@ -524,27 +628,21 @@ let timer = 60;
         }
 
         function mouthly() {
+
             let rate = document.getElementById('rate')
             let rateText =rate.options[rate.selectedIndex].text
-            console.log('rate value', rate.value)
-            console.log('rate text', rateText.replace(' месяцев', ''))
             let tempCredit = rateText.replace(' месяцев', '');
-            // const monthlyPayment = (parseInt(creditInput.value) / Number(tempCredit))*parseInt(rate.value)
-
-            var monthlyInterest = rate.value / 100 ;
+            // console.log(rate.value)
+            var monthlyInterest = rate.value * tempCredit / 100 ;
+            // console.log(monthlyInterest)
             var x = Math.pow(1 + monthlyInterest,  Number(tempCredit));
-            var monthlyPayment = (parseInt(creditInput.value) * x * monthlyInterest) / (x - 1);
-            console.log('monthlyPayment', monthlyPayment)
+            // console.log(parseInt(creditInput.value))
+            // var monthlyPayment = (parseInt(creditInput.value) * x * monthlyInterest) / (x - 1);
+            // var monthlyPayment = (parseInt(creditInput.value) )  /tempCredit + parseInt(creditInput.value) *monthlyInterest;
+            var monthlyPayment = (parseInt(creditInput.value) + (parseInt(creditInput.value) *monthlyInterest)) / tempCredit;
+            // console.log('monthlyPayment', monthlyPayment)
             monthlyPayment =Math.round(monthlyPayment)
-                // let tempCredit = 0;
-            // let interest =0;
-            // const installmentValue = '70,8';
-            // interest = installmentValue.replace(/,/g, '.')
-            // tempCredit = parseInt(creditInput.value)
-            // var monthlyInterest = interest / 100 / 12;
-            // var x = Math.pow(1 + monthlyInterest, 12);
-            // var monthlyPayment = (tempCredit * x * monthlyInterest) / (x - 1);
-            // monthlyPayment = monthlyPayment | 0;
+
             let results = document.getElementById('results-input');
             results.value = monthlyPayment.toLocaleString() + ' Рублей';
         }
